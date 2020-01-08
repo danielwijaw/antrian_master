@@ -1,0 +1,68 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+require_once APPPATH . 'libraries/API_Controller.php';
+
+class Frontend extends API_Controller {
+
+    //  Core Ajax
+	public function index()
+	{
+        $data = [
+            'root_data' => '/frontend/antrian'
+        ];
+		$this->load->view('antrian/index', $data);
+    }
+    
+    public function pasien(){
+        $data = [
+            'root_data' => '/frontend/patient'
+        ];
+		$this->load->view('antrian/index', $data);
+    }
+    
+    public function display(){
+        $data = [
+            'root_data' => '/frontend/display_all'
+        ];
+		$this->load->view('antrian/index', $data);
+    }
+    
+    public function display_poli($id){
+        $data = [
+            'root_data' => '/frontend/display_poli_by_id'
+        ];
+		$this->load->view('antrian/index', $data);
+    }
+
+	public function blank_404()
+	{
+		$this->load->view('404');
+    }
+
+	public function login()
+	{
+		$this->load->view('login');
+    }
+    
+    // Ajax
+    public function antrian(){
+        $this->load->view('antrian/antrian');
+    }
+    
+    public function patient(){
+        $this->load->view('antrian/patient');
+    }
+    
+    public function dokumentasi(){
+        $this->load->view('antrian/dokumentasi');
+    }
+    
+    public function display_all(){
+        $this->load->view('antrian/display');
+    }
+    
+    public function display_poli_by_id(){
+        $this->load->view('antrian/display_poli');
+    }
+}
