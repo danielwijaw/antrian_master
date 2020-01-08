@@ -566,10 +566,174 @@ class backend extends API_Controller {
             if($setcookie){
                 $status = true;
                 $json = "Success insert cookies";
+                redirect('/admin', 'refresh');
             }else{
                 $status = false;
                 $json = "Failed insert cookies";
             }
+        }else{
+            $status = false;
+            $json = "Failed Catching Data";
+        }
+
+        // return data
+		$this->api_return(
+			[
+				'status' => $status,
+				"data" => $json,
+			],
+		200);
+    }
+
+	public function category()
+	{
+		header("Access-Control-Allow-Origin: *");
+
+		// API Configuration
+		$this->_apiConfig([
+			'methods' => ['GET'],
+        ]);
+        
+        $query = $this->db->query(
+        "SELECT
+            child_id as id,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(child_value, \"$.k2\")
+            ) as text,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(child_value, \"$.k1\")
+            ) as url
+        FROM
+            tm_data 
+        WHERE
+            JSON_EXTRACT(child_value, \"$.k0\") = 'category' and
+            deleted_by = '0'
+        "
+        );
+
+		$result = $query->result_array();
+
+        if($result){
+            $status = true;
+            $json = $result;
+        }else{
+            $status = false;
+            $json = "Failed Catching Data";
+        }
+
+        // return data
+		$this->api_return(
+			[
+				'status' => $status,
+				"results" => $json,
+			],
+		200);
+    }
+
+	public function record_hari_ini()
+	{
+		header("Access-Control-Allow-Origin: *");
+
+		// API Configuration
+		$this->_apiConfig([
+			'methods' => ['GET'],
+        ]);
+        
+        $query = $this->db->query(
+        "SELECT
+            JSON_UNQUOTE(
+                JSON_EXTRACT( antrian_data, \"$.hari_tanggal\" )
+            ) as tanggal,
+            JSON_UNQUOTE(
+                JSON_EXTRACT( antrian_data, \"$.dokter\" )
+            ) as dokter,
+            count( antrian_id ) AS total
+        FROM
+            tm_antrian 
+        WHERE
+            JSON_EXTRACT(antrian_data, \"$.hari_tanggal\") = '".date('Y-m-d')."' and
+            deleted_by = '0'
+        GROUP BY
+	        JSON_EXTRACT( antrian_data, \"$.hari_tanggal\" ) and
+            JSON_EXTRACT( antrian_data, \"$.dokter\" )
+        "
+        );
+
+		$result = $query->result_array();
+
+        if($result){
+            $status = true;
+            $json = $result;
+        }else{
+            $status = false;
+            $json = "Failed Catching Data";
+        }
+
+        // return data
+		$this->api_return(
+			[
+				'status' => $status,
+				"results" => $json,
+			],
+		200);
+    }
+
+    public function logout_post()
+    {
+        header("Access-Control-Allow-Origin: *");
+        $this->load->helper('cookie');
+		// API Configuration
+		$this->_apiConfig([
+			'methods' => ['GET'],
+        ]);
+
+        $result = delete_cookie("cookielogin");
+
+        $status = true;
+        $json = "Success delete cookies";
+        redirect('/login', 'refresh');
+
+        // return data
+		$this->api_return(
+			[
+				'status' => $status,
+				"data" => $json,
+			],
+		200);
+    }
+
+    public function get_doctor($id)
+    {
+        header("Access-Control-Allow-Origin: *");
+
+		// API Configuration
+		$this->_apiConfig([
+			'methods' => ['GET'],
+        ]);
+
+        $query = $this->db->query(
+            "SELECT
+                child_id as id,
+                JSON_UNQUOTE(
+                    JSON_EXTRACT(child_value, \"$.k2\")
+                ) as doctor_name,
+                JSON_UNQUOTE(
+                    JSON_EXTRACT(child_value, \"$.k4\")
+                ) as poli_name
+            FROM
+                tm_data 
+            WHERE
+                JSON_EXTRACT(child_value, \"$.k0\") = 'dokter' and
+                child_id = '".$id."' and
+                deleted_by = '0'
+            "
+        );
+
+        $result = $query->row_array();
+
+        if($result){
+            $status = true;
+            $json = $result;
         }else{
             $status = false;
             $json = "Failed Catching Data";

@@ -30,7 +30,7 @@ class Frontend extends API_Controller {
     
     public function display_poli($id){
         $data = [
-            'root_data' => '/frontend/display_poli_by_id'
+            'root_data' => '/frontend/display_poli_by_id/'.$id
         ];
 		$this->load->view('antrian/index', $data);
     }
@@ -62,7 +62,7 @@ class Frontend extends API_Controller {
         $this->load->view('antrian/display');
     }
     
-    public function display_poli_by_id(){
+    public function display_poli_by_id($id){
         $this->load->view('antrian/display_poli');
     }
 }

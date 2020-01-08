@@ -7,7 +7,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-  <title>Antrian</title>
+  <title>Antrian - Dashboard</title>
 
   <!-- Custom fonts for this template-->
   <link href="<?php echo base_url() ?>public/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
@@ -15,28 +15,47 @@
 
   <!-- Custom styles for this template-->
   <link href="<?php echo base_url() ?>public/css/sb-admin-2.min.css" rel="stylesheet">
-  <style>
-      .ajaxloadingdata {
-        color: white;
-        font-weight: bold;
-      }
-  </style>
-  
-  <!-- Bootstrap core JavaScript-->
   <script src="<?php echo base_url() ?>public/vendor/jquery/jquery.min.js"></script>
-  <script src="<?php echo base_url() ?>public/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="<?php echo base_url() ?>public/js/sb-admin-2.min.js"></script>
 
 </head>
 
-<body class="bg-gradient-primary">
+<body id="page-top">
 
-  <div class="container" id="root_data"></div>
-  <div style="display:none">
-    <div id="catching_error"></div>
-</div>
+  <!-- Page Wrapper -->
+  <div id="wrapper">
 
+    <div id="sidebar"></div>
+
+    <!-- Content Wrapper -->
+    <div id="content-wrapper" class="d-flex flex-column">
+
+      <!-- Main Content -->
+      <div id="content">
+        <div id="topbar"></div>
+        <div id="root_data"></div>
+      </div>
+      <!-- End of Main Content -->
+
+      <!-- Footer -->
+      <footer class="sticky-footer bg-white">
+        <div class="container my-auto">
+          <div class="copyright text-center my-auto">
+            <span>&copy; Antrian 2019</span>
+          </div>
+        </div>
+      </footer>
+      <!-- End of Footer -->
+
+    </div>
+    <!-- End of Content Wrapper -->
+
+  </div>
+  <!-- End of Page Wrapper -->
   <script>
     ajax("<?php echo $root_data ?>","#root_data");
+    ajax("<?php echo base_url('admin/sidebar') ?>","#sidebar");
+    ajax("<?php echo base_url('admin/topbar') ?>","#topbar");
     function ajax(url, div){
         $(div).html("<p class='ajaxloadingdata'>LOADING DATA PLEASE WAIT</p>");
         $.ajax({
@@ -63,7 +82,6 @@
         });
     }
   </script>
-
 </body>
 
 </html>
