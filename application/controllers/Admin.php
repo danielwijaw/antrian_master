@@ -31,7 +31,7 @@ class Admin extends API_Controller {
     public function permalink($url)
 	{
         $data = [
-            'root_data' => '/admin/administrator/'.$url
+            'root_data' => '/admin/permalink_view/'.$url
         ];
 		$this->load->view('admin/index', $data);
     }
@@ -39,6 +39,10 @@ class Admin extends API_Controller {
     // Ajax
     public function administrator($url){
         $this->load->view('admin/'.$url);
+    }
+
+    public function permalink_view($url){
+        $this->load->view('admin/permalink');
     }
     
     // Ajax

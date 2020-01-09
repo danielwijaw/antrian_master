@@ -49,7 +49,7 @@
                   </form>
                     <hr/>
                     <div class="text-center">
-                        <a class="small" href="<?php echo base_url() ?>">Kembali Ke Antrian</a>
+                        <a class="small" href="<?php echo base_url() ?>">Kembali Ke Pendaftaran</a>
                     </div>
                     <div class="text-center">
                         <a class="small" href="<?php echo base_url('display') ?>">Display Antrian</a>

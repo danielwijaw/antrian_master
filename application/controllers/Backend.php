@@ -329,7 +329,7 @@ class backend extends API_Controller {
 			'methods' => ['GET'],
         ]);
 
-        $query = $this->db->get_where('tm_data', array('child_id' => $_GET['id_child']));
+        $query = $this->db->get_where('tm_data', array('child_id' => $_GET['id_child'], 'deleted_by' => '0'));
         
         $result = $query->row_array();
 
@@ -558,7 +558,7 @@ class backend extends API_Controller {
             $cookie= array(
                 'name'   => 'cookielogin',
                 'value'  => JSON_ENCODE($result),
-                'expire' => time()+1000,
+                'expire' => time()+7200,
                 'path' => '/',
                 'secure' => FALSE
             );
@@ -744,6 +744,252 @@ class backend extends API_Controller {
 			[
 				'status' => $status,
 				"data" => $json,
+			],
+		200);
+    }
+
+	public function category_row($url)
+	{
+		header("Access-Control-Allow-Origin: *");
+
+		// API Configuration
+		$this->_apiConfig([
+			'methods' => ['GET'],
+        ]);
+        
+        $query = $this->db->query(
+        "SELECT
+            child_id as id,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(child_value, \"$.k2\")
+            ) as text,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(child_value, \"$.k1\")
+            ) as url
+        FROM
+            tm_data 
+        WHERE
+            JSON_EXTRACT(child_value, \"$.k0\") = 'category' and
+            JSON_EXTRACT(child_value, \"$.k1\") = '".$url."' and
+            deleted_by = '0'
+        "
+        );
+
+		$result = $query->row_array();
+
+        if($result){
+            $status = true;
+            $json = $result;
+        }else{
+            $status = false;
+            $json = "Failed Catching Data";
+        }
+
+        // return data
+		$this->api_return(
+			[
+				'status' => $status,
+				"results" => $json,
+			],
+		200);
+    }
+
+    public function datatables_data($category)
+	{
+		header("Access-Control-Allow-Origin: *");
+
+		// API Configuration
+		$this->_apiConfig([
+			'methods' => ['GET'],
+        ]);
+
+        if(isset($_GET['search']['value'])){
+            $search = "and JSON_SEARCH(UPPER(tm_data.child_value), 'all', UPPER('%".$_GET['search']['value']."%')) IS NOT NULL";
+        }else{
+            $search = "";
+        }
+
+        $query_count = $this->db->query(
+            "SELECT 
+                count(tm_data.child_id) as recordsTotal
+            FROM
+                tm_data
+            WHERE
+                JSON_EXTRACT(tm_data.child_value, \"$.k0\") = '".$category."' and
+                deleted_by = '0'
+                ".$search."
+            "
+        );
+
+        $result_count = $query_count->row_array();
+
+        $data_attribute = "";
+        $data_join = "";
+        if($category=='dokter'){
+            $data_attribute = ",
+            JSON_UNQUOTE(
+                JSON_EXTRACT(tm_data.child_value, \"$.k4\")
+            ) as attribute
+            ";
+        }
+        else if($category=='user_admin'){
+            $data_attribute = ",
+            JSON_UNQUOTE(
+                JSON_EXTRACT(tm_data_2.child_value, \"$.k2\")
+            ) as attribute
+            ";
+            $data_join = "INNER JOIN tm_data as tm_data_2 on JSON_UNQUOTE(JSON_EXTRACT(tm_data.child_value, \"$.k4\")) = tm_data_2.child_id";
+        }
+        else if($category=='jadwal_dokter'){
+            $data_attribute = ",
+            JSON_UNQUOTE(
+                JSON_EXTRACT(tm_data_2.child_value, \"$.k2\")
+            ) as attribute,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(tm_data_2.child_value, \"$.k4\")
+            ) as attribute_2
+            ";
+            $data_join = "INNER JOIN tm_data as tm_data_2 on JSON_UNQUOTE(JSON_EXTRACT(tm_data.child_value, \"$.k6\")) = tm_data_2.child_id";
+        }
+        else if($category=='libur_dokter'){
+            $data_attribute = ",
+            JSON_UNQUOTE(
+                JSON_EXTRACT(tm_data_2.child_value, \"$.k2\")
+            ) as attribute,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(tm_data_2.child_value, \"$.k4\")
+            ) as attribute_2
+            ";
+            $data_join = "INNER JOIN tm_data as tm_data_2 on JSON_UNQUOTE(JSON_EXTRACT(tm_data.child_value, \"$.k3\")) = tm_data_2.child_id";
+        }
+        else{
+            $data_attribute = "";
+            $data_join = "";
+        }
+        
+        $query = $this->db->query(
+        "SELECT
+            tm_data.child_id as id,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(tm_data.child_value, \"$.k2\")
+            ) as text
+            ".$data_attribute."
+        FROM
+            tm_data 
+        ".$data_join."
+        WHERE
+            JSON_EXTRACT(tm_data.child_value, \"$.k0\") = '".$category."' and
+            tm_data.deleted_by = '0'
+            ".$search."
+        LIMIT 
+            ".$_GET['length']."
+        OFFSET
+            ".$_GET['start']."
+        "
+        );
+
+		$result = $query->result_array();
+
+        foreach($result as $key => $value){
+            if($category == 'dokter'){
+                $datatables[$key] = [
+                    $value['id'], 
+                    $value['text'],
+                    $value['attribute'],
+                    "<a href=\"".base_url('admin/edit/'.$category.'/'.$value['id'])."\"<button class=\"btn btn-primary btn-sm\">Edit</button></a> <a href=\"".base_url('backend/deleted/'.$category."/".$value['id'])."\" onclick=\"return confirm('Anda Yakin Menghapus Data ".$value['text']."?')\"><button class=\"btn btn-primary btn-sm\">Delete</button></a>"
+                ];
+            }else if($category == 'user_admin'){
+                $datatables[$key] = [
+                    $value['id'], 
+                    $value['text'],
+                    $value['attribute'],
+                    "<a href=\"".base_url('admin/edit/'.$category.'/'.$value['id'])."\"<button class=\"btn btn-primary btn-sm\">Edit</button></a> <a href=\"".base_url('backend/deleted/'.$category."/".$value['id'])."\" onclick=\"return confirm('Anda Yakin Menghapus Data ".$value['text']."?')\"><button class=\"btn btn-primary btn-sm\">Delete</button></a>"
+                ];
+            }
+            else if($category == 'jadwal_dokter'){
+                $datatables[$key] = [
+                    $value['id'], 
+                    $value['text'],
+                    $value['attribute'],
+                    $value['attribute_2'],
+                    "<a href=\"".base_url('admin/edit/'.$category.'/'.$value['id'])."\"<button class=\"btn btn-primary btn-sm\">Edit</button></a> <a href=\"".base_url('backend/deleted/'.$category."/".$value['id'])."\" onclick=\"return confirm('Anda Yakin Menghapus Data ".$value['text']."?')\"><button class=\"btn btn-primary btn-sm\">Delete</button></a>"
+                ];
+            }
+            else if($category == 'libur_dokter'){
+                $datatables[$key] = [
+                    $value['id'], 
+                    $value['text'],
+                    $value['attribute'],
+                    $value['attribute_2'],
+                    "<a href=\"".base_url('admin/edit/'.$category.'/'.$value['id'])."\"<button class=\"btn btn-primary btn-sm\">Edit</button></a> <a href=\"".base_url('backend/deleted/'.$category."/".$value['id'])."\" onclick=\"return confirm('Anda Yakin Menghapus Data ".$value['text']."?')\"><button class=\"btn btn-primary btn-sm\">Delete</button></a>"
+                ];
+            }
+            else{
+                $datatables[$key] = [
+                    $value['id'], 
+                    $value['text'],
+                    "<a href=\"".base_url('admin/edit/'.$category.'/'.$value['id'])."\"<button class=\"btn btn-primary btn-sm\">Edit</button></a> <a href=\"".base_url('backend/deleted/'.$category."/".$value['id'])."\" onclick=\"return confirm('Anda Yakin Menghapus Data ".$value['text']."?')\"><button class=\"btn btn-primary btn-sm\">Delete</button></a>"
+                ];
+            }
+        }
+
+        if($result){
+            $status = true;
+            $json = $datatables;
+            $recordsTotal = $result_count['recordsTotal'];
+        }else{
+            $status = false;
+            $json[0] = ["0","Failed Catching Data"];
+            if($category == 'dokter'){
+                $json[0] = ["0","Failed Catching Data","Failed Catching Data"];
+            }
+            $recordsTotal = "0";
+        }
+
+        // return data
+		$this->api_return(
+			[
+                'draw'  => $_GET['draw'],
+				'status' => $status,
+                'recordsTotal' => $recordsTotal,
+                'recordsFiltered' => $recordsTotal,
+                'data'  => $json
+			],
+		200);
+    }
+
+    public function deleted($url, $id)
+	{
+        $this->load->helper('cookie');
+		header("Access-Control-Allow-Origin: *");
+
+		// API Configuration
+		$this->_apiConfig([
+			'methods' => ['GET'],
+        ]);
+        
+        $cookie = get_cookie("cookielogin");
+        $cookie = JSON_DECODE($cookie, true);
+
+        $this->db->set('deleted_by', $cookie['id']);
+        $this->db->set('deleted_at', date('Y-m-d H:i:s'));
+        $this->db->where('child_id', $id);
+        $result = $this->db->update('tm_data');
+
+        if($result){
+            $status = "Delete Data Success";
+            $json = $result;
+            redirect('/admin/permalink/'.$url);
+        }else{
+            $status = false;
+            $json = "Failed Delete Data";
+        }
+
+        // return data
+		$this->api_return(
+			[
+				'status' => $status,
+				"results" => $json,
 			],
 		200);
     }
