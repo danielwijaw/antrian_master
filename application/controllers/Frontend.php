@@ -34,6 +34,13 @@ class Frontend extends API_Controller {
         ];
 		$this->load->view('antrian/index', $data);
     }
+    
+    public function antrian_data(){
+        $data = [
+            'root_data' => '/frontend/antrian_data_view'
+        ];
+		$this->load->view('antrian/index', $data);
+    }
 
 	public function blank_404()
 	{
@@ -42,7 +49,13 @@ class Frontend extends API_Controller {
 
 	public function login()
 	{
-		$this->load->view('login');
+        $this->load->helper('cookie');
+        $cookie = get_cookie("cookielogin");
+        if($cookie==null){
+            $this->load->view('login');
+        }else{
+            redirect('/admin');
+        }
     }
     
     // Ajax
@@ -59,10 +72,17 @@ class Frontend extends API_Controller {
     }
     
     public function display_all(){
+        $this->load->helper('api_helper');
         $this->load->view('antrian/display');
     }
     
     public function display_poli_by_id($id){
         $this->load->view('antrian/display_poli');
+    }
+    
+    public function antrian_data_view(){
+        $this->load->helper('cookie');
+        $this->load->helper('api_helper');
+        $this->load->view('antrian/antrian_data');
     }
 }

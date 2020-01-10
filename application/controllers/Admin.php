@@ -36,6 +36,14 @@ class Admin extends API_Controller {
 		$this->load->view('admin/index', $data);
     }
 
+    public function setting()
+	{
+        $data = [
+            'root_data' => '/admin/setting_app'
+        ];
+		$this->load->view('admin/index', $data);
+    }
+
     // Ajax
     public function administrator($url){
         $this->load->view('admin/'.$url);
@@ -45,13 +53,15 @@ class Admin extends API_Controller {
         $this->load->view('admin/permalink');
     }
     
-    // Ajax
     public function sidebar(){
         $this->load->view('admin/sidebar');
     }
     
-    // Ajax
     public function topbar(){
         $this->load->view('admin/topbar');
+    }
+    
+    public function setting_app(){
+        $this->load->view('admin/setting_app');
     }
 }

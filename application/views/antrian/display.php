@@ -13,7 +13,7 @@
                     $obj = json_decode($json, true);
                     foreach($obj['results'] as $key => $value){
                 ?>
-                <div class="col-lg-3" style="cursor: pointer" onclick="openInNewTab('<?php $id=01; echo base_url('display/'.$value['id']) ?>')">
+                <div class="col-lg-3" style="cursor: pointer" onclick="openInNewTab('<?php $id=01; echo base_url('display/'.my_simple_crypt($value['id'],'e')) ?>')">
                     <div class="card mb-4 py-3 border-bottom-primary">
                         <div class="card-body" style="text-align: center">
                         <?php echo $value['text'] ?> <br/> <b><?php echo $value['poli_name'] ?></b>

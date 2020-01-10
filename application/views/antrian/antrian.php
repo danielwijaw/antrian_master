@@ -34,8 +34,8 @@
                     </select>
                   </div>
                   <div class="col-sm-6">
-                    <select class="form-control jam_periksa_select2" name="jam_periksa" required>
-                        <option disabled selected="true">Jam Periksa</option>
+                    <select class="form-control nomor_urut_select2" name="nomor_urut" required>
+                        <option disabled selected="true">Nomor Urut</option>
                     </select>
                   </div>
                 </div>
@@ -55,7 +55,6 @@
                 <button type="submit" class="btn btn-primary btn-user btn-block">Pilih Nomor Antrian</button>
                 <input type="hidden" name="dokter_history" id="dokter_history">
                 <input type="hidden" name="hari_tanggal_history" id="hari_tanggal_history">
-                <input type="hidden" name="jam_history" id="jam_history">
               </form>
               <hr>
               <div class="text-center">
@@ -133,19 +132,18 @@
   $('.hari_tanggal_select2').on('select2:select', function (e) {
     $("#hari_tanggal_history").val(Object.entries(e.params.data));
     $("#child_id").val(e.params.data.child_id);
-    $(".jam_periksa_select2").val('').trigger('change');
-    $('.jam_periksa_select2').select2({
+    $(".nomor_urut_select2").val('').trigger('change');
+    $('.nomor_urut_select2').select2({
       ajax: {
-        url: '<?php echo base_url('backend/jam_periksa?id_child=') ?>'+e.params.data.child_id,
+        url: '<?php echo base_url('backend/nomor_urut?id_child=') ?>'+e.params.data.child_id,
         dataType: 'json',
         placeholder: "Hari & Tanggal"
       }
     });
   });
   $('.hari_tanggal_select2').on('select2:select', function (e) {
-    $("#jam_history").val(Object.entries(e.params.data));
   });
   $('.hari_tanggal_select2').select2();
-  $('.jam_periksa_select2').select2();
+  $('.nomor_urut_select2').select2();
   $('.jk_select2').select2();
 </script>

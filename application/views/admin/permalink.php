@@ -17,7 +17,6 @@
             <table id="datatables_<?php echo $obj['results']['url'] ?>" class="display" style="width:100%">
                 <thead>
                     <tr>
-                        <th>ID</th>
                         <th>Text</th>
                         <?php if($pecah[5]=='dokter' or $pecah[5]=='user_admin'){ ?>
                         <th>Attribute</th>
@@ -35,7 +34,6 @@
                 </tbody>
                 <tfoot>
                     <tr>
-                        <th>Id</th>
                         <th>Text</th>
                         <?php if($pecah[5]=='dokter' or $pecah[5]=='user_admin'){ ?>
                         <th>Attribute</th>
