@@ -1203,4 +1203,152 @@ class backend extends API_Controller {
 			],
 		200);
     }
+
+    public function create(){
+        header("Access-Control-Allow-Origin: *");
+        $this->load->helper('cookie');
+        $this->load->helper('api_helper');
+
+		// API Configuration
+		$this->_apiConfig([
+			'methods' => ['POST'],
+        ]);
+
+        $cookie = get_cookie("cookielogin");
+        $cookie = JSON_DECODE($cookie, true);
+
+        foreach($_POST as $key => $val){
+            $result       = $val;
+            $result['k1'] = strtolower($val['k2']);
+            $result['k1'] = str_replace(" ","_",$result['k1']);
+            $result['k2'] = ucwords($val['k2']);
+            if($result['k0']=='dokter'){
+                $result['k3'] = my_simple_crypt($result['k3'], 'd');
+            };
+        }
+
+        ksort($result);
+
+        $data = array(
+            'child_value' => JSON_ENCODE($result),
+            'created_by' => $cookie['id']
+        );
+    
+        $insert = $this->db->insert('tm_data', $data);
+
+        if($insert){
+            $status = true;
+            $json = "Success Insert Data";
+            redirect('/admin/permalink/'.$result['k0']);
+        }else{
+            $status = false;
+            $json = "Failed Inserting Data";
+        }
+
+        // return data
+		$this->api_return(
+			[
+				'status' => $status,
+				"results" => $json,
+			],
+		200);
+    }
+
+    public function get_full_data($url, $id)
+    {
+        $this->load->helper('api_helper');
+        header("Access-Control-Allow-Origin: *");
+
+        $id = my_simple_crypt($id,'d');
+
+		// API Configuration
+		$this->_apiConfig([
+			'methods' => ['GET'],
+        ]);
+
+        $query = $this->db->query(
+            "SELECT
+                child_id as id,
+                child_value
+            FROM
+                tm_data 
+            WHERE
+                child_id = '".$id."' and
+                deleted_by = '0'
+            "
+        );
+
+        $result = $query->row_array();
+
+        $result['id'] = my_simple_crypt($result['id'], 'e');
+        $result['child_value'] = JSON_DECODE($result['child_value'], true);
+
+        if($result){
+            $status = true;
+            $json = $result;
+        }else{
+            $status = false;
+            $json = "Failed Catching Data";
+        }
+
+        // return data
+		$this->api_return(
+			[
+				'status' => $status,
+				"results" => $json,
+			],
+		200);
+    }
+
+    public function edit($id){
+        header("Access-Control-Allow-Origin: *");
+        $this->load->helper('cookie');
+        $this->load->helper('api_helper');
+
+		// API Configuration
+		$this->_apiConfig([
+			'methods' => ['POST'],
+        ]);
+
+        $cookie = get_cookie("cookielogin");
+        $cookie = JSON_DECODE($cookie, true);
+
+        foreach($_POST as $key => $val){
+            $result       = $val;
+            $result['k1'] = strtolower($val['k2']);
+            $result['k1'] = str_replace(" ","_",$result['k1']);
+            $result['k2'] = ucwords($val['k2']);
+            if($result['k0']=='dokter'){
+                $result['k3'] = my_simple_crypt($result['k3'], 'd');
+            };
+        }
+
+        ksort($result);
+
+        $data = array(
+            'child_value' => JSON_ENCODE($result),
+            'updated_at' => date('Y-m-d H:i:s'),
+            'updated_by' => $cookie['id']
+        );
+    
+        $this->db->where('child_id', my_simple_crypt($id, 'd'));
+        $update = $this->db->update('tm_data', $data);
+
+        if($update){
+            $status = true;
+            $json = "Success Update Data";
+            redirect('/admin/permalink/'.$result['k0']);
+        }else{
+            $status = false;
+            $json = "Failed Inserting Data";
+        }
+
+        // return data
+		$this->api_return(
+			[
+				'status' => $status,
+				"results" => $json,
+			],
+		200);
+    }
 }

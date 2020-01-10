@@ -44,6 +44,22 @@ class Admin extends API_Controller {
 		$this->load->view('admin/index', $data);
     }
 
+    public function create($url)
+	{
+        $data = [
+            'root_data' => '/admin/created/'.$url
+        ];
+		$this->load->view('admin/index', $data);
+    }
+
+    public function edit($url, $id)
+	{
+        $data = [
+            'root_data' => '/admin/edited/'.$url.'/'.$id
+        ];
+		$this->load->view('admin/index', $data);
+    }
+
     // Ajax
     public function administrator($url){
         $this->load->view('admin/'.$url);
@@ -63,5 +79,13 @@ class Admin extends API_Controller {
     
     public function setting_app(){
         $this->load->view('admin/setting_app');
+    }
+
+    public function created($url){
+        $this->load->view('admin/create');
+    }
+
+    public function edited($url, $id){
+        $this->load->view('admin/edit');
     }
 }

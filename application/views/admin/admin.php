@@ -18,14 +18,17 @@
                     }
                     foreach($obj['results'] as $key => $value){
                 ?>
-                <!-- Earnings (Monthly) Card Example -->
                 <div style="margin: 1vh; width: 50vh">
                     <div class="card border-left-primary shadow h-100 py-2">
                         <div class="card-body">
                             <div class="row no-gutters align-items-center">
                                 <div>
-                                    <div class="text-xs font-weight-bold text-primary text-uppercase"><?php echo $value['text'] ?> <b><?php echo $value['poli_name'] ?></div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">Antrian : <?php echo $data[$value['id']]['total']; ?></div>
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase">
+                                        <?php echo $value['text'] ?> <b><?php echo $value['poli_name'] ?></b>
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        Antrian : <?php echo $data[$value['id']]['total']; ?>
+                                    </div>
                                 </div>
                             </div>
                         </div>

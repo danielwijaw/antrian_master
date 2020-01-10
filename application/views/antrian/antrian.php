@@ -43,14 +43,7 @@
                   <input type="text" class="form-control form-control-user" name="nomor_rm" placeholder="Nomor Rekam Medis / NIK" required>
                 </div>
                 <div class="form-group">
-                  <input type="date" class="form-control form-control-user" name="tanggal_lahir" placeholder="Tanggal Lahir" required>
-                </div>
-                <div class="form-group">
-                    <select class="form-control jk_select2" name="jk" required>
-                        <option disabled selected="true">Pilih Jenis Kelamin</option>
-                        <option value="laki-laki">Laki - Laki</option>
-                        <option value="perempuan">Perempuan</option>
-                    </select>
+                  <input type="text" class="form-control form-control-user" name="alamat" placeholder="Alamat Pasien" required>
                 </div>
                 <button type="submit" class="btn btn-primary btn-user btn-block">Pilih Nomor Antrian</button>
                 <input type="hidden" name="dokter_history" id="dokter_history">

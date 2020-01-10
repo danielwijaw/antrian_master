@@ -14,6 +14,10 @@
         </div>
         <!-- Card Body -->
         <div class="card-body">
+            <a href="<?php echo base_url('admin/create/'.$obj['results']['url']) ?>">
+                <button type="button" class="btn btn-primary btn-sm">Tambah Data</button>
+            </a>
+            <br/><br/>
             <table id="datatables_<?php echo $obj['results']['url'] ?>" class="display" style="width:100%">
                 <thead>
                     <tr>
