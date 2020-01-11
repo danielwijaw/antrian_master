@@ -86,6 +86,7 @@ class Admin extends API_Controller {
     }
 
     public function edited($url, $id){
+        $this->load->helper('api_helper');
         $this->load->view('admin/edit');
     }
 }

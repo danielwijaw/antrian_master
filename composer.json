@@ -10,15 +10,21 @@
 		"slack": "https://codeigniterchat.slack.com",
 		"source": "https://github.com/bcit-ci/CodeIgniter"
 	},
+	"autoload": {
+        "psr-4": {
+            "MyApp\\": "src"
+        }
+    },
 	"require": {
 		"php": ">=5.3.7",
-		"ctechhindi/codeigniter-api": "dev-master"
+		"ctechhindi/codeigniter-api": "dev-master",
+		"cboden/ratchet": "^0.4.1"
 	},
 	"suggest": {
 		"paragonie/random_compat": "Provides better randomness in PHP 5.x"
 	},
 	"require-dev": {
-		"mikey179/vfsStream": "1.1.*",
+		"mikey179/vfsstream": "1.1.*",
 		"phpunit/phpunit": "4.* || 5.*"
 	}
 }

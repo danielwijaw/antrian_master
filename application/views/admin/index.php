@@ -16,8 +16,28 @@
   <!-- Custom styles for this template-->
   <link href="<?php echo base_url() ?>public/css/sb-admin-2.min.css" rel="stylesheet">
   <script src="<?php echo base_url() ?>public/vendor/jquery/jquery.min.js"></script>
-  <script src="<?php echo base_url() ?>public/js/sb-admin-2.min.js"></script>
-
+  <script>
+  timeout();
+    var number = 1;
+    function timeout() {
+        timer = setTimeout(function () {
+            var nmer = number++
+            console.log('Connecting to Websocket '+nmer);
+            var conn = new WebSocket('ws://localhost:8080');
+            conn.onopen = function(e) {
+                console.log("Connection established after try connected ("+nmer+")!");
+                clearTimeout(timer);
+                conn.onmessage = function(e) {
+                    console.log(e.data);
+                };
+                conn.onclose = function(e) {
+                  timeout();
+                };
+            };
+            timeout();
+        }, 6500);
+    };
+  </script>
 </head>
 
 <body id="page-top">
@@ -25,7 +45,7 @@
   <!-- Page Wrapper -->
   <div id="wrapper">
 
-    <div id="sidebar"></div>
+    <ul id="accordionSidebar" class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion"></ul>
 
     <!-- Content Wrapper -->
     <div id="content-wrapper" class="d-flex flex-column">
@@ -54,7 +74,7 @@
   <!-- End of Page Wrapper -->
   <script>
     ajax("<?php echo $root_data ?>","#root_data");
-    ajax("<?php echo base_url('admin/sidebar') ?>","#sidebar");
+    ajax("<?php echo base_url('admin/sidebar') ?>","#accordionSidebar");
     ajax("<?php echo base_url('admin/topbar') ?>","#topbar");
     function ajax(url, div){
         $(div).html("<p class='ajaxloadingdata'>LOADING DATA PLEASE WAIT</p>");

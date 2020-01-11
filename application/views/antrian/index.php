@@ -21,7 +21,28 @@
         font-weight: bold;
       }
   </style>
-  
+  <script>
+  timeout();
+    var number = 1;
+    function timeout() {
+        timer = setTimeout(function () {
+            var nmer = number++
+            console.log('Connecting to Websocket '+nmer);
+            var conn = new WebSocket('ws://localhost:8080');
+            conn.onopen = function(e) {
+                console.log("Connection established after try connected ("+nmer+")!");
+                clearTimeout(timer);
+                conn.onmessage = function(e) {
+                    console.log(e.data);
+                };
+                conn.onclose = function(e) {
+                  timeout();
+                };
+            };
+            timeout();
+        }, 6500);
+    };
+  </script>
   <!-- Bootstrap core JavaScript-->
   <script src="<?php echo base_url() ?>public/vendor/jquery/jquery.min.js"></script>
   <script src="<?php echo base_url() ?>public/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -61,7 +82,7 @@
                 } 
             }
         });
-    }
+    };
   </script>
 
 </body>

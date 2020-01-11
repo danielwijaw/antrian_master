@@ -53,6 +53,7 @@ class backend extends API_Controller {
         "
         );
 
+        $data = [];
         foreach($query->result_array() as $key => $val){
             $data[$key]['id'] = my_simple_crypt($val['id'],'e');
             $data[$key]['text'] = $val['text'];
@@ -97,6 +98,52 @@ class backend extends API_Controller {
         "
         );
 
+        $data = [];
+        foreach($query->result_array() as $key => $val){
+            $data[$key]['id'] = my_simple_crypt($val['id'],'e');
+            $data[$key]['text'] = $val['text'];
+        }
+
+		// return data
+		$this->api_return(
+			[
+				'status' => true,
+				"results" => $data,
+			],
+		200);
+    }
+
+    public function hakakses()
+	{
+        $this->load->helper('api_helper');
+		header("Access-Control-Allow-Origin: *");
+
+		// API Configuration
+		$this->_apiConfig([
+			'methods' => ['GET'],
+        ]);
+
+        if(isset($_GET['q'])){
+            $query = " and JSON_SEARCH(child_value, 'one', '%".$_GET['q']."%') IS NOT NULL";
+        }else{
+            $query = "and 1=1";
+        };
+        
+        $query = $this->db->query(
+        "SELECT
+            child_id as id,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(child_value, \"$.k2\")
+            ) as text
+        FROM
+            tm_data 
+        WHERE
+            JSON_EXTRACT(child_value, \"$.k0\") = 'level_user' and
+            deleted_by = '0' ".$query."
+        "
+        );
+
+        $data = [];
         foreach($query->result_array() as $key => $val){
             $data[$key]['id'] = my_simple_crypt($val['id'],'e');
             $data[$key]['text'] = $val['text'];
@@ -149,9 +196,61 @@ class backend extends API_Controller {
         "
         );
 
+        $data = [];
 		foreach($query->result_array() as $key => $val){
             $data[$key]['id'] = my_simple_crypt($val['id'],'e');
             $data[$key]['text'] = $val['text'];
+        }
+
+		// return data
+		$this->api_return(
+			[
+				'status' => true,
+				"results" => $data,
+			],
+		200);
+    }
+
+    public function dokter()
+	{
+        $this->load->helper('api_helper');
+		header("Access-Control-Allow-Origin: *");
+
+		// API Configuration
+		$this->_apiConfig([
+			'methods' => ['GET'],
+        ]);
+
+        if(isset($_GET['q'])){
+            $query = " and JSON_SEARCH(child_value, 'one', '%".$_GET['q']."%') IS NOT NULL";
+        }else{
+            $query = "and 1=1";
+        };
+        
+        $query = $this->db->query(
+        "SELECT
+            child_id as id,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(child_value, \"$.k2\")
+            ) as text,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(child_value, \"$.k3\")
+            ) as poli_id,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(child_value, \"$.k4\")
+            ) as poli_name
+        FROM
+            tm_data 
+        WHERE
+            JSON_EXTRACT(child_value, \"$.k0\") = 'dokter' and
+            deleted_by = '0' ".$query."
+        "
+        );
+
+        $data = [];
+		foreach($query->result_array() as $key => $val){
+            $data[$key]['id'] = my_simple_crypt($val['id'],'e');
+            $data[$key]['text'] = $val['text']." || ".$val['poli_name'];
         }
 
 		// return data
@@ -301,6 +400,7 @@ class backend extends API_Controller {
         
         $tanggal = [];
 
+        $liburan = [];
         foreach($result_2 as $key => $value){
             $liburan[] = $value['text'];
         }
@@ -696,6 +796,7 @@ class backend extends API_Controller {
     {
         header("Access-Control-Allow-Origin: *");
         $this->load->helper('cookie');
+        $this->load->helper('api_helper');
 		// API Configuration
 		$this->_apiConfig([
 			'methods' => ['POST'],
@@ -718,7 +819,7 @@ class backend extends API_Controller {
             WHERE
                 JSON_EXTRACT(child_value, \"$.k0\") = 'user_admin' and
                 JSON_EXTRACT(child_value, \"$.k1\") = '".$_POST['username']."' and
-                JSON_EXTRACT(child_value, \"$.k3\") = '".md5($_POST['password'])."' and
+                JSON_EXTRACT(child_value, \"$.k3\") = '".my_simple_crypt($_POST['password'], 'e')."' and
                 deleted_by = '0'
             ORDER BY
                 child_id DESC
@@ -981,6 +1082,11 @@ class backend extends API_Controller {
 			'methods' => ['GET'],
         ]);
 
+        $where = "";
+        if($category=='libur_dokter'){
+            $where = "JSON_EXTRACT(tm_data.child_value, \"$.k1\") >= '".date('Y-m-d')."' and ";
+        }
+
         if(isset($_GET['search']['value'])){
             $search = "and JSON_SEARCH(UPPER(tm_data.child_value), 'all', UPPER('%".$_GET['search']['value']."%')) IS NOT NULL";
         }else{
@@ -994,6 +1100,7 @@ class backend extends API_Controller {
                 tm_data
             WHERE
                 JSON_EXTRACT(tm_data.child_value, \"$.k0\") = '".$category."' and
+                ".$where."
                 deleted_by = '0'
                 ".$search."
             "
@@ -1057,6 +1164,7 @@ class backend extends API_Controller {
         ".$data_join."
         WHERE
             JSON_EXTRACT(tm_data.child_value, \"$.k0\") = '".$category."' and
+            ".$where."
             tm_data.deleted_by = '0'
             ".$search."
         LIMIT 
@@ -1219,10 +1327,22 @@ class backend extends API_Controller {
 
         foreach($_POST as $key => $val){
             $result       = $val;
-            $result['k1'] = strtolower($val['k2']);
-            $result['k1'] = str_replace(" ","_",$result['k1']);
+            if(!isset($result['k1'])){
+                $result['k1'] = strtolower($val['k2']);
+                $result['k1'] = str_replace(" ","_",$result['k1']);
+            }
             $result['k2'] = ucwords($val['k2']);
             if($result['k0']=='dokter'){
+                $result['k3'] = my_simple_crypt($result['k3'], 'd');
+            };
+            if($result['k0']=='user_admin'){
+                $result['k3'] = my_simple_crypt($result['k3'], 'e');
+                $result['k4'] = my_simple_crypt($result['k4'], 'd');
+            };
+            if($result['k0']=='jadwal_dokter'){
+                $result['k4'] = my_simple_crypt($result['k4'], 'd');
+            };
+            if($result['k0']=='libur_dokter'){
                 $result['k3'] = my_simple_crypt($result['k3'], 'd');
             };
         }
@@ -1239,6 +1359,70 @@ class backend extends API_Controller {
         if($insert){
             $status = true;
             $json = "Success Insert Data";
+            redirect('/admin/permalink/'.$result['k0']);
+        }else{
+            $status = false;
+            $json = "Failed Inserting Data";
+        }
+
+        // return data
+		$this->api_return(
+			[
+				'status' => $status,
+				"results" => $json,
+			],
+		200);
+    }
+
+    public function edit($id){
+        header("Access-Control-Allow-Origin: *");
+        $this->load->helper('cookie');
+        $this->load->helper('api_helper');
+
+		// API Configuration
+		$this->_apiConfig([
+			'methods' => ['POST'],
+        ]);
+
+        $cookie = get_cookie("cookielogin");
+        $cookie = JSON_DECODE($cookie, true);
+
+        foreach($_POST as $key => $val){
+            $result       = $val;
+            if(!isset($result['k1'])){
+                $result['k1'] = strtolower($val['k2']);
+                $result['k1'] = str_replace(" ","_",$result['k1']);
+            }
+            $result['k2'] = ucwords($val['k2']);
+            if($result['k0']=='dokter'){
+                $result['k3'] = my_simple_crypt($result['k3'], 'd');
+            };
+            if($result['k0']=='user_admin'){
+                $result['k3'] = my_simple_crypt($result['k3'], 'e');
+                $result['k4'] = my_simple_crypt($result['k4'], 'd');
+            };
+            if($result['k0']=='jadwal_dokter'){
+                $result['k4'] = my_simple_crypt($result['k4'], 'd');
+            };
+            if($result['k0']=='libur_dokter'){
+                $result['k3'] = my_simple_crypt($result['k3'], 'd');
+            };
+        }
+
+        ksort($result);
+
+        $data = array(
+            'child_value' => JSON_ENCODE($result),
+            'updated_at' => date('Y-m-d H:i:s'),
+            'updated_by' => $cookie['id']
+        );
+    
+        $this->db->where('child_id', my_simple_crypt($id, 'd'));
+        $update = $this->db->update('tm_data', $data);
+
+        if($update){
+            $status = true;
+            $json = "Success Update Data";
             redirect('/admin/permalink/'.$result['k0']);
         }else{
             $status = false;
@@ -1289,58 +1473,6 @@ class backend extends API_Controller {
         }else{
             $status = false;
             $json = "Failed Catching Data";
-        }
-
-        // return data
-		$this->api_return(
-			[
-				'status' => $status,
-				"results" => $json,
-			],
-		200);
-    }
-
-    public function edit($id){
-        header("Access-Control-Allow-Origin: *");
-        $this->load->helper('cookie');
-        $this->load->helper('api_helper');
-
-		// API Configuration
-		$this->_apiConfig([
-			'methods' => ['POST'],
-        ]);
-
-        $cookie = get_cookie("cookielogin");
-        $cookie = JSON_DECODE($cookie, true);
-
-        foreach($_POST as $key => $val){
-            $result       = $val;
-            $result['k1'] = strtolower($val['k2']);
-            $result['k1'] = str_replace(" ","_",$result['k1']);
-            $result['k2'] = ucwords($val['k2']);
-            if($result['k0']=='dokter'){
-                $result['k3'] = my_simple_crypt($result['k3'], 'd');
-            };
-        }
-
-        ksort($result);
-
-        $data = array(
-            'child_value' => JSON_ENCODE($result),
-            'updated_at' => date('Y-m-d H:i:s'),
-            'updated_by' => $cookie['id']
-        );
-    
-        $this->db->where('child_id', my_simple_crypt($id, 'd'));
-        $update = $this->db->update('tm_data', $data);
-
-        if($update){
-            $status = true;
-            $json = "Success Update Data";
-            redirect('/admin/permalink/'.$result['k0']);
-        }else{
-            $status = false;
-            $json = "Failed Inserting Data";
         }
 
         // return data
