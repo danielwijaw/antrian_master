@@ -18,7 +18,7 @@
                     }
                     foreach($obj['results'] as $key => $value){
                 ?>
-                <div style="margin: 1vh; width: 50vh">
+                <div onclick="openInNewTab('<?php echo base_url('call_antrian/'.$value['id']) ?>')"  style="margin: 1vh; width: 50vh; cursor: pointer" >
                     <div class="card border-left-primary shadow h-100 py-2">
                         <div class="card-body">
                             <div class="row no-gutters align-items-center">
@@ -39,3 +39,10 @@
         </div>
     </div>
 </div>
+
+<script>
+    function openInNewTab(url) {
+        var win = window.open(url, '_blank');
+        win.focus();
+    }
+</script>

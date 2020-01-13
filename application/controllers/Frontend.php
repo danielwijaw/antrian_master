@@ -72,7 +72,6 @@ class Frontend extends API_Controller {
     }
     
     public function display_all(){
-        $this->load->helper('api_helper');
         $this->load->view('antrian/display');
     }
     

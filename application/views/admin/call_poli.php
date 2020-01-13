@@ -23,16 +23,17 @@
         <div class="col-lg-12">
         <div class="p-5">
             <div class="text-center">
-                <h1 class="text-gray-900 mb-4" style="font-weight: bold">Antrian <?php echo $obj['data']['poli_name'] ?></h1>
+                <h1 class="text-gray-900 mb-4" style="font-weight: bold">Antrian <?php echo $obj['data']['poli_name']."<br/>".$obj['data']['doctor_name'] ?></h1>
             </div>
             <div class="row">
                 <div class="col-lg-3">
                     <div class="card mb-4 py-3 border-bottom-primary">
-                        <div class="card-body" style="text-align: center">
-                            <img width="100%" src="<?php echo base_url('public/img/doctor.png') ?>" id="foto-dokter"/>
-                            <br/>
-                            <p class="text-gray-900" style="font-size: 22pt; font-weight: bold;"><?php echo $obj['data']['doctor_name'] = str_replace(" ", "<br/>",$obj['data']['doctor_name']) ?></p>
+                        <div class="card-body" style="text-align: center; overflow-y: scroll; height: 47vh;">
+                            <p id="list_antrian"></p>
                         </div>
+                        <p style="margin-top: 5vh" align="center">
+                            <button onclick="antrian_call('<?php echo my_simple_crypt('0', 'e') ?>', '<?php echo $obj['data']['id'] ?>')" class="btn btn-primary">Antrian Selesai</button>
+                        </p>
                     </div>
                 </div>
                 <div class="col-lg-9">
@@ -62,22 +63,26 @@
     conn.onopen = function(e) {
         clearTimeout(timer);
         call_poli();
+        list_poli();
         console.log("Connection Websocket established");
         $("#loging").html("Connection Websocket established");
         conn.onclose = function(e) {
             timeout();
             call_poli();
+            list_poli();
         };
         conn.onmessage = function(e) {
             console.log(e.data);
             $("#loging").html(e.data);
-            if(e.data=='<?php echo $pecah[5]; ?>'){
+            if(e=='<?php echo $pecah[5]; ?>'){
                 call_poli();
+                list_poli();
             };
         };
     };
-    call_poli();
     timeout();
+    call_poli();
+    list_poli();
     var number = 1;
     function timeout() {
         timer = setTimeout(function () {
@@ -87,18 +92,19 @@
             conn.onopen = function(e) {
                 clearTimeout(timer);
                 call_poli();
+                list_poli();
                 console.log("Connection established after try connected ("+nmer+")!");
                 $("#loging").html("Connection established after try connected ("+nmer+")!");
                 conn.onclose = function(e) {
                   timeout();
                   call_poli();
+                  list_poli();
                 };
                 conn.onmessage = function(e) {
                     console.log(e.data);
                     $("#loging").html(e.data);
-                    if(e.data=='<?php echo $pecah[5]; ?>'){
-                        call_poli();
-                    }
+                    call_poli();
+                    list_poli();
                 };
             };
             timeout();
@@ -125,7 +131,7 @@
                 }
             },
             error: function(XMLHttpRequest, textStatus, errorThrown) {
-                $(div).html("<p class='ajaxloadingdata'>Error Catching Data</p>");
+                $("#text_antrian").html("<p class='ajaxloadingdata'>Error Catching Data</p>");
                 $("#catching_error").html(XMLHttpRequest.responseText); 
                 if (XMLHttpRequest.status == 0) {
                 alert(' Check Your Network.');
@@ -139,4 +145,76 @@
             }
         });
     };
+    function list_poli(){
+        $("#list_antrian").html("Loading Catching Data");
+        $.ajax({
+            url: "<?php echo base_url('backend/list_antrian/'.$pecah[5]) ?>",
+            contentType: false,
+            cache: true,
+            processData: false,
+            success: function(data) {
+                if(data.results=="Failed Catching Data"){
+                    $("#list_antrian").html("-");
+                    return false;
+                }else{
+                    $("#list_antrian").html("");
+                    data.results.forEach(myFunction);
+                    console.log(data.results);
+                }
+            },
+            error: function(XMLHttpRequest, textStatus, errorThrown) {
+                $("#text_antrian").html("<p class='ajaxloadingdata'>Error Catching Data</p>");
+                $("#catching_error").html(XMLHttpRequest.responseText); 
+                if (XMLHttpRequest.status == 0) {
+                alert(' Check Your Network.');
+                } else if (XMLHttpRequest.status == 404) {
+                alert('Requested URL not found.');
+                } else if (XMLHttpRequest.status == 500) {
+                alert('Internel Server Error.');
+                }  else {
+                alert('Unknow Error.\n' + XMLHttpRequest.responseText);
+                } 
+            }
+        });
+    };
+
+    function myFunction(item, index) {
+        if(item.called_antrian=="1"){
+            var warna = "btn-danger";
+        }else{
+            var warna = "btn-primary";
+        }
+        document.getElementById("list_antrian").innerHTML += "<button onclick=\"antrian_call('"+item.antrian_id+"', '"+item.dokter_id+"')\" class=\"btn "+warna+"\">Nomor Urut " + item.nomor_urut + "</button> <br/> <br/>"; 
+    }
+
+    function antrian_call(id, poli){
+        $.ajax({
+            url: "<?php echo base_url('backend/update_call_antrian/') ?>"+id,
+            contentType: false,
+            cache: true,
+            processData: false,
+            success: function(data) {
+                if(data.results=="Failed Update Data"){
+                    alert("Gagal Memanggil Antrian");
+                }else{
+                    call_poli();
+                    list_poli();
+                    conn.send(poli);
+                }
+            },
+            error: function(XMLHttpRequest, textStatus, errorThrown) {
+                $("#text_antrian").html("<p class='ajaxloadingdata'>Error Catching Data</p>");
+                $("#catching_error").html(XMLHttpRequest.responseText); 
+                if (XMLHttpRequest.status == 0) {
+                alert(' Check Your Network.');
+                } else if (XMLHttpRequest.status == 404) {
+                alert('Requested URL not found.');
+                } else if (XMLHttpRequest.status == 500) {
+                alert('Internel Server Error.');
+                }  else {
+                alert('Unknow Error.\n' + XMLHttpRequest.responseText);
+                } 
+            }
+        });
+    }
 </script>

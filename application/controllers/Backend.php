@@ -264,6 +264,7 @@ class backend extends API_Controller {
 
     public function dokter_poli_all()
 	{
+        $this->load->helper('api_helper');
 		header("Access-Control-Allow-Origin: *");
 
 		// API Configuration
@@ -291,11 +292,25 @@ class backend extends API_Controller {
         "
         );
 
-		// return data
-		$this->api_return(
+		$result = $query->result_array();
+
+        foreach($result as $key => $value){
+            $result[$key]['id'] = my_simple_crypt($value['id'], 'e');
+            $result[$key]['poli_id'] = my_simple_crypt($value['poli_id'], 'e');
+        }
+
+        if($result){
+            $status = true;
+            $json = $result;
+        }else{
+            $status = false;
+            $json = "Failed Catching Data";
+        }
+
+        $this->api_return(
 			[
-				'status' => true,
-				"results" => $query->result_array(),
+				'status' => $status,
+				"results" => $json,
 			],
 		200);
     }
@@ -303,7 +318,14 @@ class backend extends API_Controller {
     public function hari_tanggal()
 	{
         $this->load->helper('api_helper');
+        $this->load->helper('cookie');
+        $cookie = get_cookie("cookielogin");
         $_GET['id_dokter'] = my_simple_crypt($_GET['id_dokter'], 'd');
+        if($cookie==null){
+            $hari_antrian = config_item('day_antrian_online');
+        }else{
+            $hari_antrian = config_item('day_antrian_offline');
+        }
 		header("Access-Control-Allow-Origin: *");
 
 		// API Configuration
@@ -406,7 +428,7 @@ class backend extends API_Controller {
         }
 
         $n = 0;
-        while($n<30){$n++;
+        while($n<$hari_antrian){$n++;
             if($mday>$days){
                 $mday = 1;
                 if($mon>=12){
@@ -421,13 +443,23 @@ class backend extends API_Controller {
             $val.= $mon.'-';
             if($mday<10)$val.='0';
             $val.= $mday;
-            if(array_key_exists($wday, $hari_jadwal) && !in_array($val, $liburan)){
-                $tanggal[] =[
-                    'id' => my_simple_crypt($val,'e'),
-                    'text'  => $hari[$wday].', '.$mday.' '.$bulan[$mon].' '.$year,
-                    'child_id' => my_simple_crypt($hari_jadwal[$wday],'e')
-                ];
-            };
+            if($cookie==null){
+                if(array_key_exists($wday, $hari_jadwal) && !in_array($val, $liburan) && !in_array($val, [date('Y-m-d')])){
+                    $tanggal[] =[
+                        'id' => my_simple_crypt($val,'e'),
+                        'text'  => $hari[$wday].', '.$mday.' '.$bulan[$mon].' '.$year,
+                        'child_id' => my_simple_crypt($hari_jadwal[$wday],'e')
+                    ];
+                };
+            }else{
+                if(array_key_exists($wday, $hari_jadwal) && !in_array($val, $liburan)){
+                    $tanggal[] =[
+                        'id' => my_simple_crypt($val,'e'),
+                        'text'  => $hari[$wday].', '.$mday.' '.$bulan[$mon].' '.$year,
+                        'child_id' => my_simple_crypt($hari_jadwal[$wday],'e')
+                    ];
+                };
+            }
             $wday++;
             $mday++;
         };
@@ -515,6 +547,7 @@ class backend extends API_Controller {
     {
         $this->load->helper('api_helper');
         $this->load->helper('cookie');
+        $cookie = get_cookie("cookielogin");
         header("Access-Control-Allow-Origin: *");
 
 		// API Configuration
@@ -533,6 +566,12 @@ class backend extends API_Controller {
         $_POST['hari_tanggal_history']      = explode(",",$_POST['hari_tanggal_history']);
         $_POST['hari_tanggal_history'][1]   = my_simple_crypt($_POST['hari_tanggal_history'][1], 'd');
         $_POST['hari_tanggal_history'][6]   = my_simple_crypt($_POST['hari_tanggal_history'][6], 'd');
+        $_POST['called_antrian']            = '0';
+        if($cookie==null){
+            $_POST['is_online']             = '1';
+        }else{
+            $_POST['is_online']             = '0';
+        }
 
         $data = array(
             'antrian_data' => JSON_ENCODE($_POST),
@@ -907,6 +946,7 @@ class backend extends API_Controller {
 
 	public function record_hari_ini()
 	{
+        $this->load->helper('api_helper');
 		header("Access-Control-Allow-Origin: *");
 
 		// API Configuration
@@ -934,7 +974,11 @@ class backend extends API_Controller {
         "
         );
 
-		$result = $query->result_array();
+        $result = $query->result_array();
+        
+        foreach($result as $key => $value){
+            $result[$key]['dokter'] = my_simple_crypt($value['dokter'], 'e');
+        }
 
         if($result){
             $status = true;
@@ -996,6 +1040,9 @@ class backend extends API_Controller {
                     JSON_EXTRACT(child_value, \"$.k2\")
                 ) as doctor_name,
                 JSON_UNQUOTE(
+                    JSON_EXTRACT(child_value, \"$.k3\")
+                ) as poli_id,
+                JSON_UNQUOTE(
                     JSON_EXTRACT(child_value, \"$.k4\")
                 ) as poli_name
             FROM
@@ -1010,6 +1057,8 @@ class backend extends API_Controller {
         $result = $query->row_array();
 
         if($result){
+            $result['id'] = my_simple_crypt($result['id'], 'e');
+            $result['poli_id'] = my_simple_crypt($result['poli_id'], 'e');
             $status = true;
             $json = $result;
         }else{
@@ -1477,6 +1526,281 @@ class backend extends API_Controller {
 
         // return data
 		$this->api_return(
+			[
+				'status' => $status,
+				"results" => $json,
+			],
+		200);
+    }
+
+    public function called_antrian($id){
+        $this->load->helper('api_helper');
+        header("Access-Control-Allow-Origin: *");
+
+        $id = my_simple_crypt($id,'d');
+
+		// API Configuration
+		$this->_apiConfig([
+			'methods' => ['GET'],
+        ]);
+
+        $query = $this->db->query(
+            "SELECT
+            tm_antrian.antrian_id,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(
+                    tm_antrian.antrian_data,
+                 \"$.dokter\")
+            ) as dokter_id,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(
+                    tm_antrian.antrian_data,
+                 \"$.hari_tanggal\")
+            ) as hari_tanggal,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(
+                    tm_antrian.antrian_data,
+                 \"$.nomor_urut\")
+            ) as nomor_urut,
+            f_terbilang(JSON_UNQUOTE(
+                JSON_EXTRACT(
+                    tm_antrian.antrian_data,
+                 \"$.nomor_urut\")
+            )) as terbilang,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(
+                    tm_antrian.antrian_data,
+                 \"$.called_antrian\")
+            ) as called_antrian
+            FROM
+                tm_antrian
+            WHERE
+                deleted_by = 0 and
+                JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data,\"$.dokter\")) = '".$id."' and
+                JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data,\"$.hari_tanggal\")) = '".date('Y-m-d')."' and
+                JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data,\"$.called_antrian\")) = '1'
+            "
+        );
+
+        $result = $query->row_array();
+
+
+        if($result){
+            $result['antrian_id'] = my_simple_crypt($result['antrian_id'], 'e');
+            $result['dokter_id'] = my_simple_crypt($result['dokter_id'], 'e');
+            $status = true;
+            $json = $result;
+        }else{
+            $status = false;
+            $json = "Failed Catching Data";
+        }
+
+        $this->api_return(
+			[
+				'status' => $status,
+				"results" => $json,
+			],
+		200);
+    }
+
+    public function list_antrian($id){
+        $this->load->helper('api_helper');
+        header("Access-Control-Allow-Origin: *");
+
+        $id = my_simple_crypt($id,'d');
+
+		// API Configuration
+		$this->_apiConfig([
+			'methods' => ['GET'],
+        ]);
+
+        $query = $this->db->query(
+            "SELECT
+            tm_antrian.antrian_id,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(
+                    tm_antrian.antrian_data,
+                 \"$.dokter\")
+            ) as dokter_id,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(
+                    tm_antrian.antrian_data,
+                 \"$.hari_tanggal\")
+            ) as hari_tanggal,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(
+                    tm_antrian.antrian_data,
+                 \"$.nomor_urut\")
+            ) as nomor_urut,
+            f_terbilang(JSON_UNQUOTE(
+                JSON_EXTRACT(
+                    tm_antrian.antrian_data,
+                 \"$.nomor_urut\")
+            )) as terbilang,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(
+                    tm_antrian.antrian_data,
+                 \"$.called_antrian\")
+            ) as called_antrian
+            FROM
+                tm_antrian
+            WHERE
+                deleted_by = 0 and
+                JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data,\"$.dokter\")) = '".$id."' and
+                JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data,\"$.hari_tanggal\")) = '".date('Y-m-d')."'
+            "
+        );
+
+        $result = $query->result_array();
+
+        foreach($result as $key => $value){
+            $result[$key]['antrian_id'] = my_simple_crypt($value['antrian_id'], 'e');
+            $result[$key]['dokter_id'] = my_simple_crypt($value['dokter_id'], 'e');
+        }
+
+
+        if($result){
+            $status = true;
+            $json = $result;
+        }else{
+            $status = false;
+            $json = "Failed Catching Data";
+        }
+
+        $this->api_return(
+			[
+				'status' => $status,
+				"results" => $json,
+			],
+		200);
+    }
+
+    public function update_call_antrian($id){
+        $this->load->helper('api_helper');
+        header("Access-Control-Allow-Origin: *");
+
+        $id = my_simple_crypt($id,'d');
+
+		// API Configuration
+		$this->_apiConfig([
+			'methods' => ['GET'],
+        ]);
+
+        $query = $this->db->query(
+            "UPDATE tm_antrian 
+            SET antrian_data = JSON_SET( antrian_data, \"$.called_antrian\", \"0\" )
+            "
+        );
+
+        if($query){
+            $result = $this->db->query(
+                "UPDATE tm_antrian SET
+                antrian_data = JSON_SET( antrian_data, \"$.called_antrian\", \"1\" ) 
+                WHERE
+                    antrian_id = ".$id."
+                "
+            );
+        }
+
+        if($result){
+            $status = true;
+            $json = $result;
+        }else{
+            $status = false;
+            $json = "Failed Update Data";
+        }
+
+        $this->api_return(
+			[
+				'status' => $status,
+				"results" => $json,
+			],
+		200);
+    }
+
+    public function antrian_full_date($date){
+        header("Access-Control-Allow-Origin: *");
+        $date = urldecode($date);
+        $date = explode(" - ", $date);
+
+		// API Configuration
+		$this->_apiConfig([
+			'methods' => ['GET'],
+        ]);
+
+        $query = $this->db->query(
+            "SELECT
+            JSON_UNQUOTE(
+                JSON_EXTRACT(
+                    penjamin_tb.child_value,
+                 \"$.k2\")
+            ) as penjamin_text,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(
+                    poliklinik_tb.child_value,
+                 \"$.k2\")
+            ) as poliklinik_text,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(
+                    tm_antrian.antrian_data,
+                 \"$.dokter_history[3]\")
+            ) as dokter_text,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(
+                    tm_antrian.antrian_data,
+                 \"$.hari_tanggal_history[3]\")
+            ) as hari,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(
+                    tm_antrian.antrian_data,
+                 \"$.hari_tanggal_history[4]\")
+            ) as tanggal,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(
+                    tm_antrian.antrian_data,
+                 \"$.nomor_rm\")
+            ) as nomor_rm,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(
+                    tm_antrian.antrian_data,
+                 \"$.alamat\")
+            ) as alamat,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(
+                    tm_antrian.antrian_data,
+                 \"$.nomor_urut\")
+            ) as nomor_urut,
+            CASE
+                WHEN 
+                JSON_UNQUOTE(
+                    JSON_EXTRACT(
+                        tm_antrian.antrian_data,
+                    \"$.nomor_urut\")
+                ) = 1 THEN \"Online\"
+                ELSE \"Offline\"
+            END AS is_online 
+            FROM
+                tm_antrian
+            INNER JOIN tm_data as penjamin_tb on JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data, \"$.penjamin\")) = penjamin_tb.child_id
+            INNER JOIN tm_data as poliklinik_tb on JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data, \"$.poliklinik\")) = poliklinik_tb.child_id
+            WHERE
+                tm_antrian.deleted_by = 0 and
+                JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data,\"$.hari_tanggal\")) >= '".$date['0']."' and
+                JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data,\"$.hari_tanggal\")) <= '".$date['1']."'
+            "
+        );
+
+        $result = $query->result_array();
+
+        if($result){
+            $status = true;
+            $json = $result;
+        }else{
+            $status = false;
+            $json = "Failed Catching Data";
+        }
+
+        $this->api_return(
 			[
 				'status' => $status,
 				"results" => $json,

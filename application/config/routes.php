@@ -62,3 +62,4 @@ $route['display']               = 'frontend/display';
 $route['display/(:any)']        = 'frontend/display_poli/$1';
 $route['antrian_post']          = 'backend/antrian_post';
 $route['logout']                = 'backend/logout_post';
+$route['call_antrian/(:any)']   = 'admin/call_antrian/$1';

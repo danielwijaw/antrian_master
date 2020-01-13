@@ -9,6 +9,12 @@
               <div class="text-center">
                 <h1 class="h4 text-gray-900 mb-4">Antrian Poli Klinik</h1>
               </div>
+              <?php 
+                if(config_item('status_antrian')=='0'){
+                  echo "Aplikasi Antrian Sedang Non Aktif";
+                  die();
+                }
+              ?>
               <form class="user" method="POST" action="<?php echo base_url('antrian_post') ?>">
                 <div class="form-group">
                 <input type="hidden" name="<?php echo $this->security->get_csrf_token_name();?>" value="<?php echo $this->security->get_csrf_hash();?>">

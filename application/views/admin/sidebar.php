@@ -37,9 +37,9 @@
       </li>
         <?php } ?>
       <li class="nav-item active">
-        <a class="nav-link" href="<?php echo base_url('/admin/setting') ?>">
+        <a class="nav-link" href="<?php echo base_url('/admin/report') ?>">
           <i class="fas fa-fw fa-cog"></i>
-          <span>Setting</span></a>
+          <span>Laporan</span></a>
       </li>
       <!-- Divider -->
       <hr class="sidebar-divider d-none d-md-block">

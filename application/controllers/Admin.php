@@ -36,10 +36,10 @@ class Admin extends API_Controller {
 		$this->load->view('admin/index', $data);
     }
 
-    public function setting()
+    public function report()
 	{
         $data = [
-            'root_data' => '/admin/setting_app'
+            'root_data' => '/admin/report_view'
         ];
 		$this->load->view('admin/index', $data);
     }
@@ -60,6 +60,14 @@ class Admin extends API_Controller {
 		$this->load->view('admin/index', $data);
     }
 
+    public function call_antrian($id)
+	{
+        $data = [
+            'root_data' => '/admin/antrian/'.$id
+        ];
+		$this->load->view('antrian/index', $data);
+    }
+
     // Ajax
     public function administrator($url){
         $this->load->view('admin/'.$url);
@@ -77,8 +85,8 @@ class Admin extends API_Controller {
         $this->load->view('admin/topbar');
     }
     
-    public function setting_app(){
-        $this->load->view('admin/setting_app');
+    public function report_view(){
+        $this->load->view('admin/report');
     }
 
     public function created($url){
@@ -88,5 +96,14 @@ class Admin extends API_Controller {
     public function edited($url, $id){
         $this->load->helper('api_helper');
         $this->load->view('admin/edit');
+    }
+
+    public function antrian($url){
+        $this->load->helper('api_helper');
+        $this->load->view('admin/call_poli');
+    }
+
+    public function report_excel($date, $jenis){
+        $this->load->view('admin/report_excel');
     }
 }

@@ -522,3 +522,7 @@ $config['rewrite_short_tags'] = FALSE;
 | Array:		array('10.0.1.200', '192.168.5.0/24')
 */
 $config['proxy_ips'] = '';
+$config['ipws'] = 'ws://antrian.project:8080';
+$config['day_antrian_online'] = '2';
+$config['day_antrian_offline'] = '7';
+$config['status_antrian'] = '1'; //1 = aktif, 0 = nonaktif
