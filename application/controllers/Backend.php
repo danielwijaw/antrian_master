@@ -200,6 +200,7 @@ class backend extends API_Controller {
 		foreach($query->result_array() as $key => $val){
             $data[$key]['id'] = my_simple_crypt($val['id'],'e');
             $data[$key]['text'] = $val['text'];
+            $data[$key]['attribute'] = $val['poli_name'];
         }
 
 		// return data
@@ -324,6 +325,7 @@ class backend extends API_Controller {
         if($cookie==null){
             $hari_antrian = config_item('day_antrian_online');
         }else{
+            $cookie = JSON_DECODE($cookie, true);
             $hari_antrian = config_item('day_antrian_offline');
         }
 		header("Access-Control-Allow-Origin: *");
@@ -452,13 +454,23 @@ class backend extends API_Controller {
                     ];
                 };
             }else{
-                if(array_key_exists($wday, $hari_jadwal) && !in_array($val, $liburan)){
-                    $tanggal[] =[
-                        'id' => my_simple_crypt($val,'e'),
-                        'text'  => $hari[$wday].', '.$mday.' '.$bulan[$mon].' '.$year,
-                        'child_id' => my_simple_crypt($hari_jadwal[$wday],'e')
-                    ];
-                };
+                if($cookie['role_user_access']==my_simple_crypt('0','e')){
+                    if(array_key_exists($wday, $hari_jadwal) && !in_array($val, $liburan)){
+                        $tanggal[] =[
+                            'id' => my_simple_crypt($val,'e'),
+                            'text'  => $hari[$wday].', '.$mday.' '.$bulan[$mon].' '.$year,
+                            'child_id' => my_simple_crypt($hari_jadwal[$wday],'e')
+                        ];
+                    };
+                }else{
+                    if(array_key_exists($wday, $hari_jadwal) && !in_array($val, $liburan) && !in_array($val, [date('Y-m-d')])){
+                        $tanggal[] =[
+                            'id' => my_simple_crypt($val,'e'),
+                            'text'  => $hari[$wday].', '.$mday.' '.$bulan[$mon].' '.$year,
+                            'child_id' => my_simple_crypt($hari_jadwal[$wday],'e')
+                        ];
+                    };
+                }
             }
             $wday++;
             $mday++;
@@ -547,7 +559,7 @@ class backend extends API_Controller {
     {
         $this->load->helper('api_helper');
         $this->load->helper('cookie');
-        $cookie = get_cookie("cookielogin");
+        $cookie_login = get_cookie("cookielogin");
         header("Access-Control-Allow-Origin: *");
 
 		// API Configuration
@@ -567,10 +579,15 @@ class backend extends API_Controller {
         $_POST['hari_tanggal_history'][1]   = my_simple_crypt($_POST['hari_tanggal_history'][1], 'd');
         $_POST['hari_tanggal_history'][6]   = my_simple_crypt($_POST['hari_tanggal_history'][6], 'd');
         $_POST['called_antrian']            = '0';
-        if($cookie==null){
+        if($cookie_login==null){
             $_POST['is_online']             = '1';
         }else{
-            $_POST['is_online']             = '0';
+            $cookie_login = JSON_DECODE($cookie_login, true);
+            if($cookie_login['role_user_access']==my_simple_crypt('0','e')){
+                $_POST['is_online']         = '0';
+            }else{
+                $_POST['is_online']         = '1';
+            }
         }
 
         $data = array(
@@ -581,6 +598,15 @@ class backend extends API_Controller {
         $insert = $this->db->insert('tm_antrian', $data);
 
         if($insert){
+            $_POST['child_id']                  = my_simple_crypt($_POST['child_id'], 'e');
+            $_POST['penjamin']                  = my_simple_crypt($_POST['penjamin'], 'e');
+            $_POST['poliklinik']                = my_simple_crypt($_POST['poliklinik'], 'e');
+            $_POST['dokter']                    = my_simple_crypt($_POST['dokter'], 'e');
+            $_POST['hari_tanggal']              = $_POST['hari_tanggal'];
+            $_POST['nomor_urut']                = $_POST['nomor_urut'];
+            $_POST['dokter_history'][1]         = my_simple_crypt($_POST['dokter_history'][1], 'e');
+            $_POST['hari_tanggal_history'][1]   = my_simple_crypt($_POST['hari_tanggal_history'][1], 'e');
+            $_POST['hari_tanggal_history'][6]   = my_simple_crypt($_POST['hari_tanggal_history'][6], 'e');
             $cookie= array(
                 'name'   => 'cookiebynomorrm',
                 'value'  => JSON_ENCODE($_POST),
@@ -593,7 +619,15 @@ class backend extends API_Controller {
             if($setcookie){
                 $status = true;
                 $json = "Success insert cookies";
-                redirect('backend/data_antrian_get/'.$_POST['nomor_rm']);
+                if($cookie_login==null){
+                    redirect('backend/data_antrian_get/'.$_POST['nomor_rm']);
+                }else{
+                    if($cookie_login['role_user_access']==my_simple_crypt('0','e')){
+                        redirect('frontend/cetakantrian');
+                    }else{
+                        redirect('backend/data_antrian_get/'.$_POST['nomor_rm']);
+                    }
+                }
             }else{
                 $status = false;
                 $json = "Failed insert cookies";
@@ -614,6 +648,7 @@ class backend extends API_Controller {
 
     public function data_antrian_get($nomor_rm){
         $this->load->helper('cookie');
+        $this->load->helper('api_helper');
         header("Access-Control-Allow-Origin: *");
 
 		// API Configuration
@@ -676,6 +711,14 @@ class backend extends API_Controller {
 
         $result = $query->result_array();
 
+        foreach($result as $key => $value){
+            $result[$key]['id'] = my_simple_crypt($value['id'], 'e');
+            $result[$key]['child_id'] = my_simple_crypt($value['child_id'], 'e');
+            $result[$key]['penjamin_id'] = my_simple_crypt($value['penjamin_id'], 'e');
+            $result[$key]['poliklinik_id'] = my_simple_crypt($value['poliklinik_id'], 'e');
+            $result[$key]['dokter_id'] = my_simple_crypt($value['dokter_id'], 'e');
+        }
+
         if($result){
             $cookie= array(
                 'name'   => 'cookiedataantrian',
@@ -724,6 +767,7 @@ class backend extends API_Controller {
     public function data_antrian()
     {
         $this->load->helper('cookie');
+        $this->load->helper('api_helper');
         header("Access-Control-Allow-Origin: *");
 
 		// API Configuration
@@ -786,6 +830,14 @@ class backend extends API_Controller {
 
         $result = $query->result_array();
 
+        foreach($result as $key => $value){
+            $result[$key]['id'] = my_simple_crypt($value['id'], 'e');
+            $result[$key]['child_id'] = my_simple_crypt($value['child_id'], 'e');
+            $result[$key]['penjamin_id'] = my_simple_crypt($value['penjamin_id'], 'e');
+            $result[$key]['poliklinik_id'] = my_simple_crypt($value['poliklinik_id'], 'e');
+            $result[$key]['dokter_id'] = my_simple_crypt($value['dokter_id'], 'e');
+        }
+
         if($result){
             $cookie= array(
                 'name'   => 'cookiedataantrian',
@@ -843,31 +895,38 @@ class backend extends API_Controller {
 
         $query = $this->db->query(
             "SELECT
-                child_id as id,
+                tm_data.child_id as id,
                 JSON_UNQUOTE(
-                    JSON_EXTRACT(child_value, \"$.k1\")
+                    JSON_EXTRACT(tm_data.child_value, \"$.k1\")
                 ) as username,
                 JSON_UNQUOTE(
-                    JSON_EXTRACT(child_value, \"$.k2\")
+                    JSON_EXTRACT(tm_data.child_value, \"$.k2\")
                 ) as name,
                 JSON_UNQUOTE(
-                    JSON_EXTRACT(child_value, \"$.k4\")
-                ) as user_access
+                    JSON_EXTRACT(tm_data.child_value, \"$.k4\")
+                ) as user_access,
+                JSON_UNQUOTE(
+                    JSON_EXTRACT(role_access.child_value, \"$.k3\")
+                ) as role_user_access
             FROM
-                tm_data 
+                tm_data
+            INNER JOIN tm_data as role_access on JSON_UNQUOTE(JSON_EXTRACT(tm_data.child_value, \"$.k4\")) = role_access.child_id
             WHERE
-                JSON_EXTRACT(child_value, \"$.k0\") = 'user_admin' and
-                JSON_EXTRACT(child_value, \"$.k1\") = '".$_POST['username']."' and
-                JSON_EXTRACT(child_value, \"$.k3\") = '".my_simple_crypt($_POST['password'], 'e')."' and
-                deleted_by = '0'
+                JSON_EXTRACT(tm_data.child_value, \"$.k0\") = 'user_admin' and
+                JSON_EXTRACT(tm_data.child_value, \"$.k1\") = '".$_POST['username']."' and
+                JSON_EXTRACT(tm_data.child_value, \"$.k3\") = '".my_simple_crypt($_POST['password'], 'e')."' and
+                tm_data.deleted_by = '0'
             ORDER BY
-                child_id DESC
+                tm_data.child_id DESC
             "
         );
 
         $result = $query->row_array();
 
         if($result){
+            $result['id'] = my_simple_crypt($result['id'], 'e');
+            $result['user_access'] = my_simple_crypt($result['user_access'], 'e');
+            $result['role_user_access'] = my_simple_crypt($result['role_user_access'], 'e');
             $cookie= array(
                 'name'   => 'cookielogin',
                 'value'  => JSON_ENCODE($result),
@@ -1159,12 +1218,14 @@ class backend extends API_Controller {
 
         $data_attribute = "";
         $data_join = "";
+        $orderby = "";
         if($category=='dokter'){
             $data_attribute = ",
             JSON_UNQUOTE(
                 JSON_EXTRACT(tm_data.child_value, \"$.k4\")
             ) as attribute
             ";
+            $orderby = "ORDER BY attribute";
         }
         else if($category=='user_admin'){
             $data_attribute = ",
@@ -1184,6 +1245,7 @@ class backend extends API_Controller {
             ) as attribute_2
             ";
             $data_join = "INNER JOIN tm_data as tm_data_2 on JSON_UNQUOTE(JSON_EXTRACT(tm_data.child_value, \"$.k4\")) = tm_data_2.child_id";
+            $orderby = "ORDER BY attribute";
         }
         else if($category=='libur_dokter'){
             $data_attribute = ",
@@ -1195,10 +1257,12 @@ class backend extends API_Controller {
             ) as attribute_2
             ";
             $data_join = "INNER JOIN tm_data as tm_data_2 on JSON_UNQUOTE(JSON_EXTRACT(tm_data.child_value, \"$.k3\")) = tm_data_2.child_id";
+            $orderby = "ORDER BY text";
         }
         else{
             $data_attribute = "";
             $data_join = "";
+            $orderby = "";
         }
         
         $query = $this->db->query(
@@ -1216,6 +1280,7 @@ class backend extends API_Controller {
             ".$where."
             tm_data.deleted_by = '0'
             ".$search."
+        ".$orderby."
         LIMIT 
             ".$_GET['length']."
         OFFSET
@@ -1255,6 +1320,19 @@ class backend extends API_Controller {
                     "<a href=\"".base_url('admin/edit/'.$category.'/'.my_simple_crypt($value['id'],'e'))."\"<button class=\"btn btn-primary btn-sm\">Edit</button></a> <a href=\"".base_url('backend/deleted/'.$category."/".my_simple_crypt($value['id'],'e'))."\" onclick=\"return confirm('Anda Yakin Menghapus Data ".$value['text']."?')\"><button class=\"btn btn-primary btn-sm\">Delete</button></a>"
                 ];
             }
+            else if($category == 'level_user'){
+                if($value['text']=="Administrator"){
+                    $datatables[$key] = [
+                        $value['text'],
+                        "&nbsp;"
+                    ];
+                }else{
+                    $datatables[$key] = [
+                        $value['text'],
+                        "<a href=\"".base_url('admin/edit/'.$category.'/'.my_simple_crypt($value['id'],'e'))."\"<button class=\"btn btn-primary btn-sm\">Edit</button></a> <a href=\"".base_url('backend/deleted/'.$category."/".my_simple_crypt($value['id'],'e'))."\" onclick=\"return confirm('Anda Yakin Menghapus Data ".$value['text']."?')\"><button class=\"btn btn-primary btn-sm\">Delete</button></a>"
+                    ];
+                }
+            }
             else{
                 $datatables[$key] = [
                     $value['text'],
@@ -1272,6 +1350,9 @@ class backend extends API_Controller {
             $json[0] = ["0","Failed Catching Data"];
             if($category == 'dokter'){
                 $json[0] = ["0","Failed Catching Data","Failed Catching Data"];
+            }
+            if($category == 'libur_dokter'){
+                $json[0] = ["0","Failed Catching Data","Failed Catching Data","Failed Catching Data","Failed Catching Data"];
             }
             $recordsTotal = "0";
         }
@@ -1394,6 +1475,9 @@ class backend extends API_Controller {
             if($result['k0']=='libur_dokter'){
                 $result['k3'] = my_simple_crypt($result['k3'], 'd');
             };
+            if($result['k0']=='level_user'){
+                $result['k3'] = my_simple_crypt($result['k3'], 'd');
+            };
         }
 
         ksort($result);
@@ -1454,6 +1538,9 @@ class backend extends API_Controller {
                 $result['k4'] = my_simple_crypt($result['k4'], 'd');
             };
             if($result['k0']=='libur_dokter'){
+                $result['k3'] = my_simple_crypt($result['k3'], 'd');
+            };
+            if($result['k0']=='level_user'){
                 $result['k3'] = my_simple_crypt($result['k3'], 'd');
             };
         }
@@ -1648,6 +1735,7 @@ class backend extends API_Controller {
                 deleted_by = 0 and
                 JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data,\"$.dokter\")) = '".$id."' and
                 JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data,\"$.hari_tanggal\")) = '".date('Y-m-d')."'
+            ORDER BY nomor_urut
             "
         );
 

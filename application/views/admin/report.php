@@ -54,6 +54,7 @@
             win.focus();
         }
         if(type!='excel'){
+            $("#showingdata").html("Loading Catch Data");
             $.ajax({
                 url: "<?php echo base_url('/admin/report_excel/') ?>"+date+"/"+type,
                 contentType: false,

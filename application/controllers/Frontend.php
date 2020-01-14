@@ -81,7 +81,11 @@ class Frontend extends API_Controller {
     
     public function antrian_data_view(){
         $this->load->helper('cookie');
-        $this->load->helper('api_helper');
         $this->load->view('antrian/antrian_data');
+    }
+    
+    public function cetakantrian(){
+        $this->load->helper('cookie');
+        $this->load->view('antrian/cetakantrian');
     }
 }

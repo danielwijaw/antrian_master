@@ -60,7 +60,7 @@
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
         $writer->save('php://output');
         exit;
-    }else{ ?>
+    }else{ error_reporting(0); ?>
         <div class="table-responsive">
             <table class="table table-bordered">
                 <tr>

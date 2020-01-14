@@ -21,7 +21,7 @@
                             <br/> <?php echo $value['hari_tanggal'] ?>
                         </div>
                         <?php if($value['nomor_urut']!='0'){ ?>
-                        <a onclick="return confirm('Anda Yakin Cancel Antrian Nomor Urut <?php echo $value['nomor_urut'] ?> <?php echo $value['dokter_text'] ?> <?php echo $value['poli_text'] ?> Tanggal <?php echo $value['hari_tanggal'] ?> ?')" href="<?php echo base_url('backend/cancel_antrian/'.my_simple_crypt($value['id'],"e")) ?>"><center style="font-size: 10pt">Cancel Antrian</center></a>
+                        <a onclick="return confirm('Anda Yakin Cancel Antrian Nomor Urut <?php echo $value['nomor_urut'] ?> <?php echo $value['dokter_text'] ?> <?php echo $value['poli_text'] ?> Tanggal <?php echo $value['hari_tanggal'] ?> ?')" href="<?php echo base_url('backend/cancel_antrian/'.$value['id']) ?>"><center style="font-size: 10pt">Cancel Antrian</center></a>
                         <?php } ?>
                     </div>
                 </div>

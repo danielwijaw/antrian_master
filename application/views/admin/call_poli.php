@@ -51,6 +51,8 @@
             <hr>
             <div class="text-center">
                 <a class="small" href="<?php echo base_url("display") ?>">Kembali Ke Antrian</a>
+                <br/>
+                <a class="small" href="<?php echo base_url("/logout") ?>">Logout</a>
             </div>
         </div>
         </div>

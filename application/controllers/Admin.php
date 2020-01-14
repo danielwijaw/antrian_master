@@ -9,11 +9,23 @@ class Admin extends API_Controller {
     {
         parent::__construct();
         $this->load->helper('cookie');
+        $this->load->helper('api_helper');
         $cookie = get_cookie("cookielogin");
         if($cookie==null){
             redirect('/');
         }else{
-            return true;
+            $cookie = JSON_DECODE($cookie, true);
+            if($cookie['role_user_access']==my_simple_crypt('0', 'e')){
+                return true;
+            }else{
+                if($this->uri->segment(1)!='call_antrian'){
+                    if($this->uri->segment(2)=='antrian'){
+                        return true;
+                    }else{
+                        redirect('/call_antrian/'.$cookie['role_user_access']);
+                    }
+                }
+            }
         }
 
         
@@ -94,12 +106,10 @@ class Admin extends API_Controller {
     }
 
     public function edited($url, $id){
-        $this->load->helper('api_helper');
         $this->load->view('admin/edit');
     }
 
     public function antrian($url){
-        $this->load->helper('api_helper');
         $this->load->view('admin/call_poli');
     }
 

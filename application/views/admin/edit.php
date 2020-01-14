@@ -4,7 +4,7 @@
     $json = file_get_contents(base_url('backend/get_full_data/'.$pecah[5].'/'.$pecah[6]));
     $obj = json_decode($json, true);
 ?>
-<?php if($obj['results']['child_value']['k0']=='dokter' or $obj['results']['child_value']['k0']=='user_admin' or $obj['results']['child_value']['k0']=='jadwal_dokter' or $obj['results']['child_value']['k0']=='libur_dokter'){ ?>
+<?php if($obj['results']['child_value']['k0']=='dokter' or $obj['results']['child_value']['k0']=='user_admin' or $obj['results']['child_value']['k0']=='jadwal_dokter' or $obj['results']['child_value']['k0']=='libur_dokter' or $obj['results']['child_value']['k0']=='level_user'){ ?>
     <link href="<?php echo base_url() ?>public/css/select2.min.css" rel="stylesheet">
     <script src="<?php echo base_url() ?>public/js/select2.full.min.js"></script>
 <?php }; ?>
@@ -187,6 +187,31 @@
                             </div>
                         </div>
                     <?php } ?>
+                    <?php if($obj['results']['child_value']['k0']=='level_user'){ ?>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label>Nama Hak Akses</label>
+                                </div>
+                                <div class="col-md-9">
+                                    <input type="text" class="form-control" value="<?php echo $obj['results']['child_value']['k2'] ?>" name="result[k2]" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label>Role User</label>
+                                </div>
+                                <div class="col-md-9">
+                                    <input type="hidden" class="form-control" value="<?php echo $obj['results']['child_value']['k3_text'] ?>" name="result[k3_text]" id="k3_text" required>
+                                    <select class="form-control dokter_select2" name="result[k3]" required>
+                                        <option value="<?php echo my_simple_crypt($obj['results']['child_value']['k3'], 'e') ?>"><?php echo $obj['results']['child_value']['k3_text'] ?></option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    <?php } ?>
                     <div class="form-group">
                         <input class="btn btn-primary" type="submit" value="Edit Data">
                     </div>
@@ -279,6 +304,18 @@
         });
     <?php }; ?>
     <?php if($obj['results']['child_value']['k0']=='libur_dokter'){ ?>
+        $('.dokter_select2').select2({
+                ajax: {
+                url: '<?php echo base_url('backend/dokter') ?>',
+                dataType: 'json',
+                placeholder: "Nama Dokter"
+            }
+        });
+        $('.dokter_select2').on('select2:select', function (e) {
+            $("#k3_text").val(e.params.data.text);
+        });
+    <?php }; ?>
+    <?php if($obj['results']['child_value']['k0']=='level_user'){ ?>
         $('.dokter_select2').select2({
                 ajax: {
                 url: '<?php echo base_url('backend/dokter') ?>',
