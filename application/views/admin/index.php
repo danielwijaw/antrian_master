@@ -51,7 +51,7 @@
   </div>
   <!-- End of Page Wrapper -->
   <script>
-    ajax("<?php echo $root_data ?>","#root_data");
+    ajax("<?php echo base_url("/".$root_data) ?>","#root_data");
     ajax("<?php echo base_url('admin/sidebar') ?>","#accordionSidebar");
     ajax("<?php echo base_url('admin/topbar') ?>","#topbar");
     function ajax(url, div){

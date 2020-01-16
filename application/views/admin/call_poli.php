@@ -61,58 +61,8 @@
 </div>
 
 <script>
-    var conn = new WebSocket('<?php echo config_item('ipws'); ?>');
-    conn.onopen = function(e) {
-        clearTimeout(timer);
-        call_poli();
-        list_poli();
-        console.log("Connection Websocket established");
-        $("#loging").html("Connection Websocket established");
-        conn.onclose = function(e) {
-            timeout();
-            call_poli();
-            list_poli();
-        };
-        conn.onmessage = function(e) {
-            console.log(e.data);
-            $("#loging").html(e.data);
-            if(e=='<?php echo $pecah[5]; ?>'){
-                call_poli();
-                list_poli();
-            };
-        };
-    };
-    timeout();
     call_poli();
     list_poli();
-    var number = 1;
-    function timeout() {
-        timer = setTimeout(function () {
-            var nmer = number++
-            console.log('Connecting to Websocket '+nmer);
-            var conn = new WebSocket('<?php echo config_item('ipws'); ?>');
-            conn.onopen = function(e) {
-                clearTimeout(timer);
-                call_poli();
-                list_poli();
-                console.log("Connection established after try connected ("+nmer+")!");
-                $("#loging").html("Connection established after try connected ("+nmer+")!");
-                conn.onclose = function(e) {
-                  timeout();
-                  call_poli();
-                  list_poli();
-                };
-                conn.onmessage = function(e) {
-                    console.log(e.data);
-                    $("#loging").html(e.data);
-                    call_poli();
-                    list_poli();
-                };
-            };
-            timeout();
-            return conn;
-        }, 6500);
-    };
     function call_poli(){
         $("#nomor_antrian").html("&infin;");
         $("#text_antrian").html("Loading Catching Data");
@@ -191,7 +141,7 @@
 
     function antrian_call(id, poli){
         $.ajax({
-            url: "<?php echo base_url('backend/update_call_antrian/') ?>"+id,
+            url: "<?php echo base_url('backend/update_call_antrian/') ?>"+id+"/"+poli,
             contentType: false,
             cache: true,
             processData: false,
@@ -201,7 +151,6 @@
                 }else{
                     call_poli();
                     list_poli();
-                    conn.send(poli);
                 }
             },
             error: function(XMLHttpRequest, textStatus, errorThrown) {
@@ -219,4 +168,22 @@
             }
         });
     }
+</script>
+<script src="<?php echo base_url() ?>public/js/pusher.js"></script>
+<script>
+    // Enable pusher logging - don't include this in production
+    Pusher.logToConsole = true;
+
+    var pusher = new Pusher('6da9105f74f8a8d019fc', {
+        cluster: 'ap1',
+        forceTLS: true
+    });
+
+    var channel = pusher.subscribe('my-channel');
+    channel.bind('my-event', function(data) {
+        if(data=='<?php echo $pecah[5]; ?>'){
+            call_poli();
+            list_poli();
+        };
+    });
 </script>

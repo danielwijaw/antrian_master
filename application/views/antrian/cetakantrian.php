@@ -17,6 +17,7 @@
 doPrint();
 function doPrint() {
     window.print();            
+    alert("Pandaftaran Pasien Secara Online Telah Berhasil");
     document.location.href = "<?php echo base_url('/') ?>"; 
 }
 </script>

@@ -58,53 +58,7 @@
 </div>
 
 <script>
-    var conn = new WebSocket('<?php echo config_item('ipws'); ?>');
-    conn.onopen = function(e) {
-        clearTimeout(timer);
-        call_poli();
-        console.log("Connection Websocket established");
-        $("#loging").html("Connection Websocket established");
-        conn.onclose = function(e) {
-            timeout();
-            call_poli();
-        };
-        conn.onmessage = function(e) {
-            console.log(e.data);
-            $("#loging").html(e.data);
-            if(e.data=='<?php echo $pecah[5]; ?>'){
-                call_poli();
-            };
-        };
-    };
     call_poli();
-    timeout();
-    var number = 1;
-    function timeout() {
-        timer = setTimeout(function () {
-            var nmer = number++
-            console.log('Connecting to Websocket '+nmer);
-            var conn = new WebSocket('<?php echo config_item('ipws'); ?>');
-            conn.onopen = function(e) {
-                clearTimeout(timer);
-                call_poli();
-                console.log("Connection established after try connected ("+nmer+")!");
-                $("#loging").html("Connection established after try connected ("+nmer+")!");
-                conn.onclose = function(e) {
-                  timeout();
-                  call_poli();
-                };
-                conn.onmessage = function(e) {
-                    console.log(e.data);
-                    $("#loging").html(e.data);
-                    if(e.data=='<?php echo $pecah[5]; ?>'){
-                        call_poli();
-                    }
-                };
-            };
-            timeout();
-            return conn;
-        }, 6500);
-    };
     function call_poli(){
         $("#nomor_antrian").html("&infin;");
         $("#text_antrian").html("Loading Catching Data");
@@ -139,4 +93,21 @@
             }
         });
     };
+</script>
+<script src="<?php echo base_url() ?>public/js/pusher.js"></script>
+<script>
+    // Enable pusher logging - don't include this in production
+    Pusher.logToConsole = true;
+
+    var pusher = new Pusher('6da9105f74f8a8d019fc', {
+        cluster: 'ap1',
+        forceTLS: true
+    });
+
+    var channel = pusher.subscribe('my-channel');
+    channel.bind('my-event', function(data) {
+        if(data=='<?php echo $pecah[5]; ?>'){
+            call_poli();
+        };
+    });
 </script>

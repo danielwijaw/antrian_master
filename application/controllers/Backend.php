@@ -2,6 +2,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once APPPATH . 'libraries/API_Controller.php';
+require FCPATH. '/vendor/autoload.php';
 
 class backend extends API_Controller {
 
@@ -619,6 +620,18 @@ class backend extends API_Controller {
             if($setcookie){
                 $status = true;
                 $json = "Success insert cookies";
+                $options = array(
+                    'cluster' => 'ap1',
+                    'useTLS' => true
+                );
+                $pusher = new Pusher\Pusher(
+                    '6da9105f74f8a8d019fc',
+                    '4559f03877dfa2b54a58',
+                    '932255',
+                    $options
+                );
+                $data = $_POST['poliklinik'];
+                $pusher->trigger('my-channel', 'my-event', $data);
                 if($cookie_login==null){
                     redirect('backend/data_antrian_get/'.$_POST['nomor_rm']);
                 }else{
@@ -1245,7 +1258,7 @@ class backend extends API_Controller {
             ) as attribute_2
             ";
             $data_join = "INNER JOIN tm_data as tm_data_2 on JSON_UNQUOTE(JSON_EXTRACT(tm_data.child_value, \"$.k4\")) = tm_data_2.child_id";
-            $orderby = "ORDER BY attribute";
+            $orderby = "ORDER BY attribute, field(text, 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu')";
         }
         else if($category=='libur_dokter'){
             $data_attribute = ",
@@ -1383,7 +1396,7 @@ class backend extends API_Controller {
         $cookie = get_cookie("cookielogin");
         $cookie = JSON_DECODE($cookie, true);
 
-        $this->db->set('deleted_by', $cookie['id']);
+        $this->db->set('deleted_by', my_simple_crypt($cookie['id'], 'd'));
         $this->db->set('deleted_at', date('Y-m-d H:i:s'));
         $this->db->where('child_id', my_simple_crypt($id,'d'));
         $result = $this->db->update('tm_data');
@@ -1463,6 +1476,15 @@ class backend extends API_Controller {
             }
             $result['k2'] = ucwords($val['k2']);
             if($result['k0']=='dokter'){
+                if(preg_match("/Dr./", $result['k2'])) {
+                    $result['k2'] = str_replace("Dr.","dr.",$result['k2']);
+                }
+                if(preg_match("/DR./", $result['k2'])) {
+                    $result['k2'] = str_replace("DR.","dr.",$result['k2']);
+                }
+                if(preg_match("/dR./", $result['k2'])) {
+                    $result['k2'] = str_replace("dR.","dr.",$result['k2']);
+                }
                 $result['k3'] = my_simple_crypt($result['k3'], 'd');
             };
             if($result['k0']=='user_admin'){
@@ -1484,7 +1506,7 @@ class backend extends API_Controller {
 
         $data = array(
             'child_value' => JSON_ENCODE($result),
-            'created_by' => $cookie['id']
+            'created_by' => my_simple_crypt($cookie['id'], 'd')
         );
     
         $insert = $this->db->insert('tm_data', $data);
@@ -1528,6 +1550,15 @@ class backend extends API_Controller {
             }
             $result['k2'] = ucwords($val['k2']);
             if($result['k0']=='dokter'){
+                if(preg_match("/Dr./", $result['k2'])) {
+                    $result['k2'] = str_replace("Dr.","dr.",$result['k2']);
+                }
+                if(preg_match("/DR./", $result['k2'])) {
+                    $result['k2'] = str_replace("DR.","dr.",$result['k2']);
+                }
+                if(preg_match("/dR./", $result['k2'])) {
+                    $result['k2'] = str_replace("dR.","dr.",$result['k2']);
+                }
                 $result['k3'] = my_simple_crypt($result['k3'], 'd');
             };
             if($result['k0']=='user_admin'){
@@ -1550,7 +1581,7 @@ class backend extends API_Controller {
         $data = array(
             'child_value' => JSON_ENCODE($result),
             'updated_at' => date('Y-m-d H:i:s'),
-            'updated_by' => $cookie['id']
+            'updated_by' => my_simple_crypt($cookie['id'], 'd')
         );
     
         $this->db->where('child_id', my_simple_crypt($id, 'd'));
@@ -1763,7 +1794,7 @@ class backend extends API_Controller {
 		200);
     }
 
-    public function update_call_antrian($id){
+    public function update_call_antrian($id, $poli){
         $this->load->helper('api_helper');
         header("Access-Control-Allow-Origin: *");
 
@@ -1793,6 +1824,18 @@ class backend extends API_Controller {
         if($result){
             $status = true;
             $json = $result;
+            $options = array(
+                'cluster' => 'ap1',
+                'useTLS' => true
+            );
+            $pusher = new Pusher\Pusher(
+                '6da9105f74f8a8d019fc',
+                '4559f03877dfa2b54a58',
+                '932255',
+                $options
+            );
+            $data = $poli;
+            $pusher->trigger('my-channel', 'my-event', $data);
         }else{
             $status = false;
             $json = "Failed Update Data";
@@ -1806,7 +1849,7 @@ class backend extends API_Controller {
 		200);
     }
 
-    public function antrian_full_date($date){
+    public function antrian_full_date($date, $search){
         header("Access-Control-Allow-Origin: *");
         $date = urldecode($date);
         $date = explode(" - ", $date);
@@ -1815,6 +1858,19 @@ class backend extends API_Controller {
 		$this->_apiConfig([
 			'methods' => ['GET'],
         ]);
+
+        if($search=="-"){
+            $pencarian = "";
+        }else{
+            $pencarian = "
+                and 
+                    (
+                        JSON_SEARCH(UPPER(penjamin_tb.child_value), 'all', UPPER('%".$search."%')) IS NOT NULL or
+                        JSON_SEARCH(UPPER(poliklinik_tb.child_value), 'all', UPPER('%".$search."%')) IS NOT NULL or
+                        JSON_SEARCH(UPPER(tm_antrian.antrian_data), 'all', UPPER('%".$search."%')) IS NOT NULL
+                    )
+            ";
+        }
 
         $query = $this->db->query(
             "SELECT
@@ -1851,6 +1907,11 @@ class backend extends API_Controller {
             JSON_UNQUOTE(
                 JSON_EXTRACT(
                     tm_antrian.antrian_data,
+                 \"$.nama_pasien\")
+            ) as nama_pasien,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(
+                    tm_antrian.antrian_data,
                  \"$.alamat\")
             ) as alamat,
             JSON_UNQUOTE(
@@ -1875,6 +1936,7 @@ class backend extends API_Controller {
                 tm_antrian.deleted_by = 0 and
                 JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data,\"$.hari_tanggal\")) >= '".$date['0']."' and
                 JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data,\"$.hari_tanggal\")) <= '".$date['1']."'
+                ".$pencarian."
             "
         );
 

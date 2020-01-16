@@ -35,7 +35,7 @@
 </div>
 
   <script>
-    ajax("<?php echo $root_data ?>","#root_data");
+    ajax("<?php echo base_url("/".$root_data) ?>","#root_data");
     function ajax(url, div){
         $(div).html("<p class='ajaxloadingdata'>LOADING DATA PLEASE WAIT</p>");
         $.ajax({

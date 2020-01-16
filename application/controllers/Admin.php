@@ -113,7 +113,7 @@ class Admin extends API_Controller {
         $this->load->view('admin/call_poli');
     }
 
-    public function report_excel($date, $jenis){
+    public function report_excel($date, $jenis, $search){
         $this->load->view('admin/report_excel');
     }
 }

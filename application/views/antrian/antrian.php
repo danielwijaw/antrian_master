@@ -49,9 +49,15 @@
                   <input type="text" class="form-control form-control-user" name="nomor_rm" placeholder="Nomor Rekam Medis / NIK" required>
                 </div>
                 <div class="form-group">
+                  <input type="text" class="form-control form-control-user" name="nama_pasien" placeholder="Nama Pasien" required>
+                </div>
+                <div class="form-group">
                   <input type="text" class="form-control form-control-user" name="alamat" placeholder="Alamat Pasien" required>
                 </div>
-                <button type="submit" class="btn btn-primary btn-user btn-block">Pilih Nomor Antrian</button>
+                <div class="form-group">
+                  <input type="text" class="form-control form-control-user" onkeyup="this.value=this.value.replace(/[^\d]/,'')" name="no_telp" placeholder="Nomor Telephon / Handphone" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-user btn-block">Daftar</button>
                 <input type="hidden" name="dokter_history" id="dokter_history">
                 <input type="hidden" name="hari_tanggal_history" id="hari_tanggal_history">
               </form>

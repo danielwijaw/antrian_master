@@ -13,10 +13,10 @@
                 <div class="col-md-6">&nbsp;</div>
                 <div class="col-md-6">
                     <div class="row">
-                        <div class="col-md-3">
-                            &nbsp;
-                        </div>
                         <div class="col-md-6">
+                            <input type="text" id="valsearch" class="form-control form-control-user">
+                        </div>
+                        <div class="col-md-3">
                             <input type="text" id="datesearch" class="form-control form-control-user">
                         </div>
                         <div class="col-md-3">
@@ -49,14 +49,18 @@
 
     function exportdata(type){
         var date = $("#datesearch").val();
+        var valsearch = $("#valsearch").val();
+        if(valsearch==""){
+            valsearch = "-";
+        }
         if(type=='excel'){
-            var win = window.open("<?php echo base_url('/admin/report_excel/') ?>"+date+"/"+type, '_blank');
+            var win = window.open("<?php echo base_url('/admin/report_excel/') ?>"+date+"/"+type+"/"+valsearch, '_blank');
             win.focus();
         }
         if(type!='excel'){
             $("#showingdata").html("Loading Catch Data");
             $.ajax({
-                url: "<?php echo base_url('/admin/report_excel/') ?>"+date+"/"+type,
+                url: "<?php echo base_url('/admin/report_excel/') ?>"+date+"/"+type+"/"+valsearch,
                 contentType: false,
                 cache: true,
                 processData: false,
