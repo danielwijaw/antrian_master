@@ -41,6 +41,20 @@ class Frontend extends API_Controller {
         ];
 		$this->load->view('antrian/index', $data);
     }
+    
+    public function dokter_cuti(){
+        $data = [
+            'root_data' => '/frontend/dokter_cuti_view'
+        ];
+		$this->load->view('antrian/index', $data);
+    }
+    
+    public function jadwal_dokter(){
+        $data = [
+            'root_data' => '/frontend/jadwal_dokter_view'
+        ];
+		$this->load->view('antrian/index', $data);
+    }
 
 	public function blank_404()
 	{
@@ -87,5 +101,13 @@ class Frontend extends API_Controller {
     public function cetakantrian(){
         $this->load->helper('cookie');
         $this->load->view('antrian/cetakantrian');
+    }
+    
+    public function dokter_cuti_view(){
+        $this->load->view('antrian/cuti');
+    }
+    
+    public function jadwal_dokter_view(){
+        $this->load->view('antrian/jadwal');
     }
 }

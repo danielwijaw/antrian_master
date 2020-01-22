@@ -17,6 +17,13 @@
               ?>
               <form class="user" method="POST" action="<?php echo base_url('antrian_post') ?>">
                 <div class="form-group">
+                    <select class="form-control type_patient_select2"  name="type_patient" required>
+                        <option disabled selected="true">Jenis Pasien Baru / Lama</option>
+                        <option value="baru">Pasien Baru</option>
+                        <option value="lama">Pasien Lama</option>
+                    </select>
+                </div>
+                <div class="form-group">
                 <input type="hidden" name="<?php echo $this->security->get_csrf_token_name();?>" value="<?php echo $this->security->get_csrf_hash();?>">
                 <input type="hidden" name="child_id" id="child_id">
                     <select class="form-control jenis_penjamin_select2" name="penjamin" required>
@@ -34,7 +41,7 @@
                     </select>
                 </div>
                 <div class="form-group row">
-                  <div class="col-sm-6 mb-3 mb-sm-0">
+                  <div class="col-sm-6">
                     <select class="form-control hari_tanggal_select2" name="hari_tanggal" required>
                         <option disabled selected="true">Hari & Tanggal</option>
                     </select>
@@ -64,6 +71,12 @@
               <hr>
               <div class="text-center">
                 <a class="small" href="<?php echo base_url() ?>pasien">Sudah Memiliki Nomor Antrian?</a>
+              </div>
+              <div class="text-center">
+                <a class="small" href="<?php echo base_url() ?>frontend/dokter_cuti">Jadwal Libur Dokter</a>
+              </div>
+              <div class="text-center">
+                <a class="small" href="<?php echo base_url() ?>frontend/jadwal_dokter">Jadwal Dokter</a>
               </div>
               <div class="text-center">
                 <a class="small" onclick="ajax('<?php echo base_url() ?>frontend/dokumentasi','#dokumentasishow')" href="javascript:void(0)" data-toggle="modal" data-target="#modaldokumentasi">Dokumentasi</a>
@@ -151,4 +164,5 @@
   $('.hari_tanggal_select2').select2();
   $('.nomor_urut_select2').select2();
   $('.jk_select2').select2();
+  $('.type_patient_select2').select2();
 </script>
