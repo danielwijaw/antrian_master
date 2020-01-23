@@ -142,16 +142,6 @@
                         <div class="form-group">
                             <div class="row">
                                 <div class="col-md-3">
-                                    <label>Jumlah Antrian</label>
-                                </div>
-                                <div class="col-md-9">
-                                    <input type="number" onkeyup="this.value=this.value.replace(/[^\d]/,'')" class="form-control" name="result[k3]" placeholder="Masukan Jumlah Antrian" required>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="row">
-                                <div class="col-md-3">
                                     <label>Hari Praktik</label>
                                 </div>
                                 <div class="col-md-9">
@@ -161,6 +151,40 @@
                                 </div>
                             </div>
                         </div>
+                        <input id="jumlah_jadwal" type="hidden" value="1">
+                        <div id="jadwal-praktik-dokter">
+                            <div id="jadwal_1">
+                                <div class="col-md-12" style="font-weight: bold; text-align: right">
+                                    <button onclick="jadwal_plus()" type="button" class="btn btn-primary btn-sm"><li class="fa fa-plus"></li></button>
+                                </div>
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label>Jam Praktik</label>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <input type="time" value="<?php echo date('H:i') ?>" class="form-control" name="result[k3_mulai][]" required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <input type="time" value="<?php echo date('H:i') ?>" class="form-control" name="result[k3_finish][]" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label>Jumlah Antrian</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <input type="number" onkeyup="this.value=this.value.replace(/[^\d]/,'')" class="form-control" name="result[k3_count][]" placeholder="Masukan Jumlah Antrian" required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <p style="color:red">
+                            *Note : Pada Jadwal Praktik tombol "<b>A</b>" => AM , "<b>P</b>" => PM
+                        </p>
                     <?php } ?>
                     <?php if($obj['results']['url']=='libur_dokter'){ ?>
                         <div class="form-group">
@@ -302,6 +326,45 @@
         $('.hari_select2').select2({
             data: data
         });
+        function jadwal_plus() {
+            var html = "";
+            var jumlah_jadwal = $("#jumlah_jadwal").val();
+            var count = parseInt(jumlah_jadwal) + 1;
+            $("#jumlah_jadwal").val(count);
+            html += "<div id='jadwal_"+count+"'>";
+                html += "<div class=\"col-md-12\" style=\"font-weight: bold; text-align: right\">";
+                    html += "<button type=\"button\" class=\"btn btn-danger btn-sm\" onclick=\"jadwal_minus("+count+")\"><li class=\"fa fa-minus\"></li></button>";
+                html += "</div>";
+                html += "<div class=\"form-group\">";
+                    html += "<div class=\"row\">";
+                        html += "<div class=\"col-md-3\">";
+                            html += "<label>Jam Praktik</label>";
+                        html += "</div>";
+                        html += "<div class=\"col-md-4\">";
+                            html += "<input type=\"time\" value=\"<?php echo date('H:i') ?>\" class=\"form-control\" name=\"result[k3_mulai][]\" required>";
+                        html += "</div>";
+                        html += "<div class=\"col-md-4\">";
+                            html += "<input type=\"time\" value=\"<?php echo date('H:i') ?>\" class=\"form-control\" name=\"result[k3_finish][]\" required>";
+                        html += "</div>";
+                    html += "</div>";
+                html += "</div>";
+                html += "<div class=\"form-group\">";
+                    html += "<div class=\"row\">";
+                        html += "<div class=\"col-md-3\">";
+                            html += "<label>Jumlah Antrian</label>";
+                        html += "</div>";
+                        html += "<div class=\"col-md-9\">";
+                            html += "<input type=\"number\" onkeyup=\"this.value=this.value.replace(/[^\\d]/,'')\" class=\"form-control\" name=\"result[k3_count][]\" placeholder=\"Masukan Jumlah Antrian\" required>";
+                        html += "</div>";
+                    html += "</div>";
+                html += "</div>";
+            html += "</div>";
+            $("#jadwal-praktik-dokter").append(html);
+        }
+        function jadwal_minus(id_minus){
+            var elem = document.getElementById("jadwal_"+id_minus);
+            return elem.parentNode.removeChild(elem);
+        }
     <?php }; ?>
     <?php if($obj['results']['url']=='libur_dokter'){ ?>
         $('.dokter_select2').select2({
