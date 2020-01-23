@@ -35,15 +35,22 @@
                         <option disabled selected="true">Poliklinik</option>
                     </select>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
+                  <div class="col-sm-6">
                     <select class="form-control dokter_select2" name="dokter" required>
                         <option disabled selected="true">Dokter</option>
                     </select>
-                </div>
-                <div class="form-group row">
+                  </div>
                   <div class="col-sm-6">
                     <select class="form-control hari_tanggal_select2" name="hari_tanggal" required>
                         <option disabled selected="true">Hari & Tanggal</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group row">
+                  <div class="col-sm-6">
+                    <select class="form-control jam_select2" name="jam_praktik" required>
+                        <option disabled selected="true">Jam Praktik</option>
                     </select>
                   </div>
                   <div class="col-sm-6">
@@ -67,6 +74,7 @@
                 <button type="submit" class="btn btn-primary btn-user btn-block">Daftar</button>
                 <input type="hidden" name="dokter_history" id="dokter_history">
                 <input type="hidden" name="hari_tanggal_history" id="hari_tanggal_history">
+                <input type="hidden" name="jam_history" id="jam_history">
               </form>
               <hr>
               <div class="text-center">
@@ -150,17 +158,27 @@
   $('.hari_tanggal_select2').on('select2:select', function (e) {
     $("#hari_tanggal_history").val(Object.entries(e.params.data));
     $("#child_id").val(e.params.data.child_id);
-    $(".nomor_urut_select2").val('').trigger('change');
-    $('.nomor_urut_select2').select2({
+    $(".jam_select2").val('').trigger('change');
+    $('.jam_select2').select2({
       ajax: {
-        url: '<?php echo base_url('backend/nomor_urut?id_child=') ?>'+e.params.data.child_id,
+        url: '<?php echo base_url('backend/jam_praktik?id_child=') ?>'+e.params.data.child_id,
         dataType: 'json',
         placeholder: "Hari & Tanggal"
       }
     });
   });
-  $('.hari_tanggal_select2').on('select2:select', function (e) {
+  $('.jam_select2').on('select2:select', function (e) {
+    $("#jam_history").val(Object.entries(e.params.data));
+    $(".nomor_urut_select2").val('').trigger('change');
+    $('.nomor_urut_select2').select2({
+      ajax: {
+        url: '<?php echo base_url('backend/nomor_urut?id_child=') ?>'+e.params.data.child_id+'&jam_praktik='+e.params.data.id,
+        dataType: 'json',
+        placeholder: "Hari & Tanggal"
+      }
+    });
   });
+  $('.jam_select2').select2();
   $('.hari_tanggal_select2').select2();
   $('.nomor_urut_select2').select2();
   $('.jk_select2').select2();

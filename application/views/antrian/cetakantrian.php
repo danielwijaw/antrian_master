@@ -9,7 +9,7 @@
         <div class="card-body" style="text-align: center">
             <?php echo $cookie_login['dokter_history']['3'] ?> || <?php echo $cookie_login['dokter_history']['5'] ?> 
             <br/> <b style="font-size:36pt"><?php echo $cookie_login['nomor_urut'] ?></b> 
-            <br/> <?php echo $cookie_login['hari_tanggal'] ?>
+            <br/> <?php echo $cookie_login['hari_tanggal']."<br/>".$cookie_login['jam_praktik'] ?>
         </div>
     </div>
 </div>

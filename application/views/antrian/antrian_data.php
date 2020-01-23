@@ -18,7 +18,7 @@
                         <div class="card-body" style="text-align: center">
                             <?php echo $value['dokter_text'] ?> || <?php echo $value['poli_text'] ?> 
                             <br/> <b style="font-size:36pt"><?php echo $value['nomor_urut'] ?></b> 
-                            <br/> <?php echo $value['hari_tanggal'] ?>
+                            <br/> <?php echo $value['hari_tanggal']."<br/>".$value['jam_praktik'] ?>
                         </div>
                         <?php if($value['nomor_urut']!='0'){ ?>
                         <a onclick="return confirm('Anda Yakin Cancel Antrian Nomor Urut <?php echo $value['nomor_urut'] ?> <?php echo $value['dokter_text'] ?> <?php echo $value['poli_text'] ?> Tanggal <?php echo $value['hari_tanggal'] ?> ?')" href="<?php echo base_url('backend/cancel_antrian/'.$value['id']) ?>"><center style="font-size: 10pt">Cancel Antrian</center></a>

@@ -486,9 +486,64 @@ class backend extends API_Controller {
 		200);
     }
 
+    public function jam_praktik(){
+        
+        $this->load->helper('api_helper');
+        $_GET['id_child'] = my_simple_crypt($_GET['id_child'], 'd');
+        header("Access-Control-Allow-Origin: *");
+
+		// API Configuration
+		$this->_apiConfig([
+			'methods' => ['GET'],
+        ]);
+        
+        $query = $this->db->query(
+            "SELECT
+                child_id as id,
+                JSON_UNQUOTE(
+                    JSON_EXTRACT(child_value, \"$.k3_count\")
+                ) as jumlah,
+                JSON_UNQUOTE(
+                    JSON_EXTRACT(child_value, \"$.k3_finish\")
+                ) as sampai,
+                JSON_UNQUOTE(
+                    JSON_EXTRACT(child_value, \"$.k3_mulai\")
+                ) as mulai
+            FROM
+                tm_data 
+            WHERE
+                child_id = '".$_GET['id_child']."' and
+                deleted_by = '0'
+            "
+            );
+    
+            $result = $query->row_array();
+
+            $jumlah_antrian = JSON_DECODE($result['jumlah'], true);
+            $jam_mulai = JSON_DECODE($result['mulai'], true);
+            $jam_selesai = JSON_DECODE($result['sampai'], true);
+
+            foreach($jumlah_antrian as $key => $value){
+                $antrian[] = [
+                    'id'        => my_simple_crypt($jam_mulai[$key]." - ".$jam_selesai[$key], 'e'),
+                    'text'      => $jam_mulai[$key]." - ".$jam_selesai[$key],
+                    'jumlah'    => $jumlah_antrian[$key],
+                    'child_id'  => my_simple_crypt($_GET['id_child'], 'e')
+                ];
+            }
+
+        $this->api_return(
+			[
+				'status' => true,
+				"results" => $antrian,
+			],
+		200);
+    }
+
     public function nomor_urut()
     {
         $this->load->helper('api_helper');
+        $_GET['jam_praktik'] = my_simple_crypt($_GET['jam_praktik'], 'd');
         $_GET['id_child'] = my_simple_crypt($_GET['id_child'], 'd');
         header("Access-Control-Allow-Origin: *");
 
@@ -501,16 +556,39 @@ class backend extends API_Controller {
             "SELECT
                 child_id as id,
                 JSON_UNQUOTE(
-                    JSON_EXTRACT(child_value, \"$.k3\")
-                ) as max_antrian
+                    JSON_EXTRACT(child_value, \"$.k3_count\")
+                ) as jumlah,
+                JSON_UNQUOTE(
+                    JSON_EXTRACT(child_value, \"$.k3_finish\")
+                ) as sampai,
+                JSON_UNQUOTE(
+                    JSON_EXTRACT(child_value, \"$.k3_mulai\")
+                ) as mulai
             FROM
                 tm_data 
             WHERE
                 child_id = '".$_GET['id_child']."' and
-                deleted_by = '0' "
-        );
+                deleted_by = '0'
+            "
+            );
+    
         $result = $query->row_array();
 
+        $jumlah_antrian = JSON_DECODE($result['jumlah'], true);
+        $jam_mulai = JSON_DECODE($result['mulai'], true);
+        $jam_selesai = JSON_DECODE($result['sampai'], true);
+
+        foreach($jumlah_antrian as $key => $value){
+            if($jam_mulai[$key]." - ".$jam_selesai[$key] == $_GET['jam_praktik']){
+                $antrian = [
+                    'id'        => $jam_mulai[$key]." - ".$jam_selesai[$key],
+                    'text'      => $jam_mulai[$key]." - ".$jam_selesai[$key],
+                    'jumlah'    => $jumlah_antrian[$key],
+                    'child_id'  => my_simple_crypt($_GET['id_child'], 'e')
+                ];
+            }
+        }
+        
         $query_2 = $this->db->query(
             "SELECT
                 JSON_UNQUOTE(
@@ -520,6 +598,7 @@ class backend extends API_Controller {
                 tm_antrian 
             WHERE
                 JSON_EXTRACT(antrian_data, \"$.child_id\") = '".$_GET['id_child']."' and
+                JSON_EXTRACT(antrian_data, \"$.jam_praktik\") = '".$_GET['jam_praktik']."' and
                 deleted_by = '0' "
         );
         
@@ -530,7 +609,7 @@ class backend extends API_Controller {
             $pesanan[] = $val_2['nomor_urut'];
         }
 
-        for($x=1; $x <= $result['max_antrian']; $x++){
+        for($x=1; $x <= $antrian['jumlah']; $x++){
             if(!in_array($x, $pesanan)){
                 $data[] = [
                     'id'    => my_simple_crypt($x,'e'),
@@ -574,6 +653,7 @@ class backend extends API_Controller {
         $_POST['dokter']                    = my_simple_crypt($_POST['dokter'], 'd');
         $_POST['hari_tanggal']              = my_simple_crypt($_POST['hari_tanggal'], 'd');
         $_POST['nomor_urut']                = my_simple_crypt($_POST['nomor_urut'], 'd');
+        $_POST['jam_praktik']               = my_simple_crypt($_POST['jam_praktik'], 'd');
         $_POST['dokter_history']            = explode(",",$_POST['dokter_history']);
         $_POST['dokter_history'][1]         = my_simple_crypt($_POST['dokter_history'][1], 'd');
         $_POST['hari_tanggal_history']      = explode(",",$_POST['hari_tanggal_history']);
@@ -604,6 +684,7 @@ class backend extends API_Controller {
             $_POST['poliklinik']                = my_simple_crypt($_POST['poliklinik'], 'e');
             $_POST['dokter']                    = my_simple_crypt($_POST['dokter'], 'e');
             $_POST['hari_tanggal']              = $_POST['hari_tanggal'];
+            $_POST['jam_praktik']               = $_POST['jam_praktik'];
             $_POST['nomor_urut']                = $_POST['nomor_urut'];
             $_POST['dokter_history'][1]         = my_simple_crypt($_POST['dokter_history'][1], 'e');
             $_POST['hari_tanggal_history'][1]   = my_simple_crypt($_POST['hari_tanggal_history'][1], 'e');
@@ -688,6 +769,9 @@ class backend extends API_Controller {
                     JSON_EXTRACT(tm_antrian.antrian_data, \"$.hari_tanggal\")
                 ) as hari_tanggal,
                 JSON_UNQUOTE(
+                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\")
+                ) as jam_praktik,
+                JSON_UNQUOTE(
                     JSON_EXTRACT(tm_antrian.antrian_data, \"$.nomor_urut\")
                 ) as nomor_urut,
                 JSON_UNQUOTE(
@@ -752,7 +836,7 @@ class backend extends API_Controller {
         }else{
             $cookie= array(
                 'name'   => 'cookiedataantrian',
-                'value'  => JSON_ENCODE($result = [0 => ['id'=>'0','dokter_text'=>'DATA','poli_text'=>'KOSONG','nomor_urut'=>'0','hari_tanggal'=>'BELUM MENDAFTAR ANTRIAN']]),
+                'value'  => JSON_ENCODE($result = [0 => ['id'=>'0','dokter_text'=>'DATA','poli_text'=>'KOSONG','nomor_urut'=>'0','jam_praktik'=>'0','hari_tanggal'=>'BELUM MENDAFTAR ANTRIAN']]),
                 'expire' => time()+(10 * 365 * 24 * 60 * 60),
                 'path' => '/',
                 'secure' => FALSE
@@ -806,6 +890,9 @@ class backend extends API_Controller {
                 JSON_UNQUOTE(
                     JSON_EXTRACT(tm_antrian.antrian_data, \"$.hari_tanggal\")
                 ) as hari_tanggal,
+                JSON_UNQUOTE(
+                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\")
+                ) as jam_praktik,
                 JSON_UNQUOTE(
                     JSON_EXTRACT(tm_antrian.antrian_data, \"$.nomor_urut\")
                 ) as nomor_urut,
@@ -871,7 +958,7 @@ class backend extends API_Controller {
         }else{
             $cookie= array(
                 'name'   => 'cookiedataantrian',
-                'value'  => JSON_ENCODE($result = [0 => ['id'=>'0','dokter_text'=>'DATA','poli_text'=>'KOSONG','nomor_urut'=>'0','hari_tanggal'=>'BELUM MENDAFTAR ANTRIAN']]),
+                'value'  => JSON_ENCODE($result = [0 => ['id'=>'0','dokter_text'=>'DATA','poli_text'=>'KOSONG','nomor_urut'=>'0','jam_praktik'=>'0','hari_tanggal'=>'BELUM MENDAFTAR ANTRIAN']]),
                 'expire' => time()+(10 * 365 * 24 * 60 * 60),
                 'path' => '/',
                 'secure' => FALSE
