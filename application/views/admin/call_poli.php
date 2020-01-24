@@ -15,6 +15,7 @@
     $pecah = explode("/", $data);
     $json = file_get_contents(base_url('backend/get_doctor/'.$pecah[5]));
     $obj = json_decode($json, true);
+    $pecah[6] = urldecode($pecah[6]);
 ?>
 <div class="card o-hidden border-0 shadow-lg my-5">
     <div class="card-body p-0">
@@ -23,16 +24,28 @@
         <div class="col-lg-12">
         <div class="p-5">
             <div class="text-center">
-                <h1 class="text-gray-900 mb-4" style="font-weight: bold">Antrian <?php echo $obj['data']['poli_name']."<br/>".$obj['data']['doctor_name'] ?></h1>
+                <h1 class="text-gray-900 mb-4" style="font-weight: bold">Antrian <?php echo $obj['data']['poli_name']."<br/>".$obj['data']['doctor_name']." ".$pecah[6] ?></h1>
             </div>
             <div class="row">
                 <div class="col-lg-3">
                     <div class="card mb-4 py-3 border-bottom-primary">
-                        <div class="card-body" style="text-align: center; overflow-y: scroll; height: 47vh;">
-                            <p id="list_antrian"></p>
-                        </div>
-                        <p style="margin-top: 5vh" align="center">
-                            <button onclick="antrian_call('<?php echo my_simple_crypt('0', 'e') ?>', '<?php echo $obj['data']['id'] ?>')" class="btn btn-primary">Antrian Selesai</button>
+                        <p align="center">
+                            <button onclick="antrian_call('next', '<?php echo $obj['data']['id'] ?>')" class="btn btn-primary">Antrian Selanjutnya</button>
+                        </p>
+                        <p align="center">
+                            <button onclick="antrian_call('prev', '<?php echo $obj['data']['id'] ?>')" class="btn btn-primary">Antrian Sebelumnya</button>
+                        </p>
+                        <p align="center">
+                            <button onclick="antrian_call('repeat', '<?php echo $obj['data']['id'] ?>')" class="btn btn-primary">Ulangi Antrian</button>
+                        </p>
+                        <p align="center">
+                            <button onclick="antrian_call('0', '<?php echo $obj['data']['id'] ?>')" class="btn btn-primary">Antrian Selesai</button>
+                        </p>
+                        <p>
+                            <div class="col-md-12" align="center">
+                                <input id="custom_number" type="number" onkeyup="this.value=this.value.replace(/[^\d]/,'')" class="form-control"> <br/>
+                                <button onclick="antrian_call('custom', '<?php echo $obj['data']['id'] ?>')" class="btn btn-primary">Custom Antrian</button>
+                            </div>
                         </p>
                     </div>
                 </div>
@@ -62,12 +75,11 @@
 
 <script>
     call_poli();
-    list_poli();
     function call_poli(){
         $("#nomor_antrian").html("&infin;");
         $("#text_antrian").html("Loading Catching Data");
         $.ajax({
-            url: "<?php echo base_url('backend/called_antrian/'.$pecah[5]) ?>",
+            url: "<?php echo base_url('backend/called_antrian/'.$pecah[5].'/'.$pecah[6]) ?>",
             contentType: false,
             cache: true,
             processData: false,
@@ -97,51 +109,19 @@
             }
         });
     };
-    function list_poli(){
-        $("#list_antrian").html("Loading Catching Data");
-        $.ajax({
-            url: "<?php echo base_url('backend/list_antrian/'.$pecah[5]) ?>",
-            contentType: false,
-            cache: true,
-            processData: false,
-            success: function(data) {
-                if(data.results=="Failed Catching Data"){
-                    $("#list_antrian").html("-");
-                    return false;
-                }else{
-                    $("#list_antrian").html("");
-                    data.results.forEach(myFunction);
-                    console.log(data.results);
-                }
-            },
-            error: function(XMLHttpRequest, textStatus, errorThrown) {
-                $("#text_antrian").html("<p class='ajaxloadingdata'>Error Catching Data</p>");
-                $("#catching_error").html(XMLHttpRequest.responseText); 
-                if (XMLHttpRequest.status == 0) {
-                alert(' Check Your Network.');
-                } else if (XMLHttpRequest.status == 404) {
-                alert('Requested URL not found.');
-                } else if (XMLHttpRequest.status == 500) {
-                alert('Internel Server Error.');
-                }  else {
-                alert('Unknow Error.\n' + XMLHttpRequest.responseText);
-                } 
-            }
-        });
-    };
 
-    function myFunction(item, index) {
-        if(item.called_antrian=="1"){
-            var warna = "btn-danger";
+    function antrian_call(id, doctor){
+        $("#nomor_antrian").html("&infin;");
+        $("#text_antrian").html("Loading Sending Data");
+        var custom_val = $("#custom_number").val();
+        var jam_praktik = '<?php echo $pecah[6] ?>';
+        if(id==='custom'){
+            var id = custom_val;
         }else{
-            var warna = "btn-primary";
+            var id = id;
         }
-        document.getElementById("list_antrian").innerHTML += "<button onclick=\"antrian_call('"+item.antrian_id+"', '"+item.dokter_id+"')\" class=\"btn "+warna+"\">Nomor Urut " + item.nomor_urut + "</button> <br/> <br/>"; 
-    }
-
-    function antrian_call(id, poli){
         $.ajax({
-            url: "<?php echo base_url('backend/update_call_antrian/') ?>"+id+"/"+poli,
+            url: "<?php echo base_url('backend/update_call_antrian/') ?>"+id+"/"+doctor+"/"+jam_praktik,
             contentType: false,
             cache: true,
             processData: false,
@@ -150,11 +130,10 @@
                     alert("Gagal Memanggil Antrian");
                 }else{
                     call_poli();
-                    list_poli();
                 }
             },
             error: function(XMLHttpRequest, textStatus, errorThrown) {
-                $("#text_antrian").html("<p class='ajaxloadingdata'>Error Catching Data</p>");
+                $("#text_antrian").html("<p class='ajaxloadingdata'>Error Loading Data</p>");
                 $("#catching_error").html(XMLHttpRequest.responseText); 
                 if (XMLHttpRequest.status == 0) {
                 alert(' Check Your Network.');
@@ -181,9 +160,8 @@
 
     var channel = pusher.subscribe('my-channel');
     channel.bind('my-event', function(data) {
-        if(data=='<?php echo $pecah[5]; ?>'){
+        if(data[0]=='<?php echo $pecah[5]; ?>' && data[1]=='<?php echo $pecah[6]; ?>'){
             call_poli();
-            list_poli();
         };
     });
 </script>

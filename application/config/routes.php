@@ -49,17 +49,17 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | Examples:	my-controller/index	-> my_controller/index
 |		my-controller/my-method	-> my_controller/my_method
 */
-$route['default_controller']    = 'frontend';
-$route['404_override']          = 'frontend/blank_404';
-$route['translate_uri_dashes']  = FALSE;
-$route['login']                 = 'frontend/login';
-$route['login/']                = 'frontend/login';
-$route['index']                 = 'frontend/index';
-$route['index/']                = 'frontend/index';
-$route['pasien']                = 'frontend/pasien';
-$route['pasien/']               = 'frontend/pasien';
-$route['display']               = 'frontend/display';
-$route['display/(:any)']        = 'frontend/display_poli/$1';
-$route['antrian_post']          = 'backend/antrian_post';
-$route['logout']                = 'backend/logout_post';
-$route['call_antrian/(:any)']   = 'admin/call_antrian/$1';
+$route['default_controller']            = 'frontend';
+$route['404_override']                  = 'frontend/blank_404';
+$route['translate_uri_dashes']          = FALSE;
+$route['login']                         = 'frontend/login';
+$route['login/']                        = 'frontend/login';
+$route['index']                         = 'frontend/index';
+$route['index/']                        = 'frontend/index';
+$route['pasien']                        = 'frontend/pasien';
+$route['pasien/']                       = 'frontend/pasien';
+$route['display']                       = 'frontend/display';
+$route['display/(:any)/(:any)']         = 'frontend/display_poli/$1/$2';
+$route['antrian_post']                  = 'backend/antrian_post';
+$route['logout']                        = 'backend/logout_post';
+$route['call_antrian/(:any)/(:any)']    = 'admin/call_antrian/$1/$2';

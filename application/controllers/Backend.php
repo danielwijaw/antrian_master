@@ -287,6 +287,99 @@ class backend extends API_Controller {
 		200);
     }
 
+    public function get_list_today()
+    {
+        $this->load->helper('api_helper');
+		header("Access-Control-Allow-Origin: *");
+
+		// API Configuration
+		$this->_apiConfig([
+			'methods' => ['GET'],
+        ]);
+        
+        $now  = getdate();
+        $mday = $now['mday'];
+        $mon  = $now['mon'];
+        $year = $now['year'];
+        $wday = $now['wday'];
+        $days = date('t');
+
+        $convert = [
+            1 => 'Senin',
+            2 => 'Selasa',
+            3 => 'Rabu',
+            4 => 'Kamis',
+            5 => 'Jumat',
+            6 => 'Sabtu',
+            7 => 'Minggu'
+        ];
+
+        $query = $this->db->query(
+            "SELECT
+                child_id as id,
+                JSON_UNQUOTE(
+                    JSON_EXTRACT(child_value, \"$.k2\")
+                ) as date,
+                JSON_UNQUOTE(
+                    JSON_EXTRACT(child_value, \"$.k3_count\")
+                ) as count,
+                JSON_UNQUOTE(
+                    JSON_EXTRACT(child_value, \"$.k3_finish\")
+                ) as finish,
+                JSON_UNQUOTE(
+                    JSON_EXTRACT(child_value, \"$.k3_mulai\")
+                ) as start,
+                JSON_UNQUOTE(
+                    JSON_EXTRACT(child_value, \"$.k4\")
+                ) as doctor_id,
+                JSON_UNQUOTE(
+                    JSON_EXTRACT(child_value, \"$.k4_text\")
+                ) as doctor_detail
+            FROM
+                tm_data 
+            WHERE
+                JSON_SEARCH(UPPER(child_value), 'all', UPPER('%".$convert[$wday]."%')) IS NOT NULL and
+                JSON_EXTRACT(child_value, \"$.k0\") = 'jadwal_dokter' and
+                deleted_by = '0'
+            "
+            );
+    
+        $result = $query->result_array();
+
+        $numbering = 0;
+        foreach($result as $key => $value){
+            $result[$key]['count'] = JSON_DECODE($value['count'], true);
+            $result[$key]['finish'] = JSON_DECODE($value['finish'], true);
+            $result[$key]['start'] = JSON_DECODE($value['start'], true);
+        };
+        
+        foreach($result as $key2 => $value2){
+            foreach($value2['count'] as $keyv => $valv){
+                $doctor_jadwal[] = [
+                    'id'     => my_simple_crypt($value2['doctor_id'], 'e'),
+                    'doctor_detail' => $value2['doctor_detail'],
+                    'count'         => $valv,
+                    'jam_praktik'   => $value2['start'][$keyv]." - ".$value2['finish'][$keyv]
+                ];
+            }
+        }
+
+        if($result){
+            $status = true;
+            $json = $doctor_jadwal;
+        }else{
+            $status = false;
+            $json = "Failed Catching Data";
+        }
+
+        $this->api_return(
+			[
+				'status' => $status,
+				"results" => $json,
+			],
+		200);
+    }
+
     public function dokter_poli_all()
 	{
         $this->load->helper('api_helper');
@@ -1332,6 +1425,9 @@ class backend extends API_Controller {
                 JSON_EXTRACT( antrian_data, \"$.hari_tanggal\" )
             ) as tanggal,
             JSON_UNQUOTE(
+                JSON_EXTRACT( antrian_data, \"$.jam_praktik\" )
+            ) as jam_praktik,
+            JSON_UNQUOTE(
                 JSON_EXTRACT( antrian_data, \"$.dokter\" )
             ) as dokter,
             count( antrian_id ) AS total
@@ -1342,7 +1438,8 @@ class backend extends API_Controller {
             deleted_by = '0'
         GROUP BY
 	        JSON_EXTRACT( antrian_data, \"$.hari_tanggal\" ) and
-            JSON_EXTRACT( antrian_data, \"$.dokter\" )
+            JSON_EXTRACT( antrian_data, \"$.dokter\" ) and
+            JSON_EXTRACT( antrian_data, \"$.jam_praktik\" )
         "
         );
 
@@ -1951,7 +2048,8 @@ class backend extends API_Controller {
 		200);
     }
 
-    public function called_antrian($id){
+    public function called_antrian($id, $jadwal){
+        $jadwal = urldecode($jadwal);
         $this->load->helper('api_helper');
         header("Access-Control-Allow-Origin: *");
 
@@ -1996,6 +2094,7 @@ class backend extends API_Controller {
                 deleted_by = 0 and
                 JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data,\"$.dokter\")) = '".$id."' and
                 JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data,\"$.hari_tanggal\")) = '".date('Y-m-d')."' and
+                JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data,\"$.jam_praktik\")) = '".$jadwal."' and
                 JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data,\"$.called_antrian\")) = '1'
             "
         );
@@ -2094,31 +2193,175 @@ class backend extends API_Controller {
 		200);
     }
 
-    public function update_call_antrian($id, $poli){
+    public function update_call_antrian($id, $poli, $jam_praktik){
         $this->load->helper('api_helper');
+        $jam_praktik = urldecode($jam_praktik);
+        $poli = my_simple_crypt($poli, 'd');
         header("Access-Control-Allow-Origin: *");
-
-        $id = my_simple_crypt($id,'d');
 
 		// API Configuration
 		$this->_apiConfig([
 			'methods' => ['GET'],
         ]);
 
-        $query = $this->db->query(
-            "UPDATE tm_antrian 
-            SET antrian_data = JSON_SET( antrian_data, \"$.called_antrian\", \"0\" )
-            "
-        );
-
-        if($query){
+        if($id=='0'){
             $result = $this->db->query(
-                "UPDATE tm_antrian SET
-                antrian_data = JSON_SET( antrian_data, \"$.called_antrian\", \"1\" ) 
+                "UPDATE tm_antrian 
+                SET antrian_data = JSON_SET( antrian_data, \"$.called_antrian\", \"0\" )
                 WHERE
-                    antrian_id = ".$id."
+                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\") = '".$jam_praktik."' and
+                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.dokter\") = '".$poli."'
                 "
             );
+        }
+        elseif($id=='next'){
+            $query_first = $this->db->query(
+                "   SELECT antrian_id, 
+                    JSON_UNQUOTE(
+                        JSON_EXTRACT(
+                            tm_antrian.antrian_data,
+                        \"$.nomor_urut\")
+                    ) as nomor_urut, 
+                    JSON_UNQUOTE(
+                        JSON_EXTRACT(
+                            tm_antrian.antrian_data,
+                        \"$.called_antrian\")
+                    ) as called_antrian
+                    FROM tm_antrian
+                    WHERE
+                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\") = '".$jam_praktik."' and
+                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.dokter\") = '".$poli."'
+                    ORDER BY CAST(nomor_urut AS UNSIGNED) ASC
+                "
+            );
+            $result_first = $query_first->result_array();
+            $nextrue = "0";
+            foreach($result_first as $keyz => $valxc){
+                if($valxc['called_antrian']=='1'){
+                    $idnya['called'][] = $valxc['nomor_urut'];
+                }else{
+                    $idnya['iddle'][] = $valxc['nomor_urut'];
+                }
+            }
+            if(!isset($idnya['called'])){
+                $call_id = $idnya['iddle'][0];
+            }else{
+                $called = $idnya['called'][0];
+                $call_idx = array_merge($idnya['called'],$idnya['iddle']);
+                sort($call_idx);
+                foreach($call_idx as $keyx => $valx){
+                    if($valx > $called){
+                        $call_id = $valx;
+                        break;
+                    }
+                }
+            }
+            if($result_first){
+                $query = $this->db->query(
+                    "UPDATE tm_antrian 
+                    SET antrian_data = JSON_SET( antrian_data, \"$.called_antrian\", \"0\" )
+                    WHERE
+                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\") = '".$jam_praktik."' and
+                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.dokter\") = '".$poli."'
+                    "
+                );
+            }
+            if($query){
+                $result = $this->db->query(
+                    "UPDATE tm_antrian 
+                    SET antrian_data = JSON_SET( antrian_data, \"$.called_antrian\", \"1\" )
+                    WHERE
+                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\") = '".$jam_praktik."' and
+                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.dokter\") = '".$poli."' and
+                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.nomor_urut\") = '".$call_id."'
+                    "
+                );
+            }
+        }elseif($id=='prev'){
+            $query_first = $this->db->query(
+                "   SELECT antrian_id, 
+                    JSON_UNQUOTE(
+                        JSON_EXTRACT(
+                            tm_antrian.antrian_data,
+                        \"$.nomor_urut\")
+                    ) as nomor_urut, 
+                    JSON_UNQUOTE(
+                        JSON_EXTRACT(
+                            tm_antrian.antrian_data,
+                        \"$.called_antrian\")
+                    ) as called_antrian
+                    FROM tm_antrian
+                    WHERE
+                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\") = '".$jam_praktik."' and
+                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.dokter\") = '".$poli."'
+                    ORDER BY CAST(nomor_urut AS UNSIGNED) ASC
+                "
+            );
+            $result_first = $query_first->result_array();
+            $nextrue = "0";
+            foreach($result_first as $keyz => $valxc){
+                if($valxc['called_antrian']=='1'){
+                    $idnya['called'][] = $valxc['nomor_urut'];
+                }else{
+                    $idnya['iddle'][] = $valxc['nomor_urut'];
+                }
+            }
+            if(!isset($idnya['called'])){
+                $call_id = $idnya['iddle'][0];
+            }else{
+                $called = $idnya['called'][0];
+                $call_idx = array_merge($idnya['called'],$idnya['iddle']);
+                rsort($call_idx);
+                foreach($call_idx as $keyx => $valx){
+                    if($valx < $called){
+                        $call_id = $valx;
+                        break;
+                    }
+                }
+            }
+            if($result_first){
+                $query = $this->db->query(
+                    "UPDATE tm_antrian 
+                    SET antrian_data = JSON_SET( antrian_data, \"$.called_antrian\", \"0\" )
+                    WHERE
+                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\") = '".$jam_praktik."' and
+                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.dokter\") = '".$poli."'
+                    "
+                );
+            }
+            if($query){
+                $result = $this->db->query(
+                    "UPDATE tm_antrian 
+                    SET antrian_data = JSON_SET( antrian_data, \"$.called_antrian\", \"1\" )
+                    WHERE
+                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\") = '".$jam_praktik."' and
+                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.dokter\") = '".$poli."' and
+                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.nomor_urut\") = '".$call_id."'
+                    "
+                );
+            }
+        }elseif($id=='repeat'){
+            $result = true;
+        }else{
+            $query = $this->db->query(
+                "UPDATE tm_antrian 
+                SET antrian_data = JSON_SET( antrian_data, \"$.called_antrian\", \"0\" )
+                WHERE
+                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\") = '".$jam_praktik."' and
+                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.dokter\") = '".$poli."'
+                "
+            );
+            if($query){
+                $result = $this->db->query(
+                    "UPDATE tm_antrian 
+                    SET antrian_data = JSON_SET( antrian_data, \"$.called_antrian\", \"1\" )
+                    WHERE
+                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\") = '".$jam_praktik."' and
+                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.dokter\") = '".$poli."' and
+                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.nomor_urut\") = '".$id."'
+                    "
+                );
+            }
         }
 
         if($result){
@@ -2134,7 +2377,7 @@ class backend extends API_Controller {
                 '932255',
                 $options
             );
-            $data = $poli;
+            $data = [my_simple_crypt($poli, 'e'), $jam_praktik];
             $pusher->trigger('my-channel', 'my-event', $data);
         }else{
             $status = false;

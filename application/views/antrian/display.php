@@ -9,14 +9,14 @@
             </div>
             <div class="row">
                 <?php 
-                    $json = file_get_contents(base_url('backend/dokter_poli_all'));
+                    $json = file_get_contents(base_url('backend/get_list_today'));
                     $obj = json_decode($json, true);
                     foreach($obj['results'] as $key => $value){
                 ?>
-                <div class="col-lg-3" style="cursor: pointer" onclick="openInNewTab('<?php $id=01; echo base_url('display/'.$value['id']) ?>')">
+                <div class="col-lg-3" style="cursor: pointer" onclick="openInNewTab('<?php $id=01; echo base_url('display/'.$value['id'].'/'.$value['jam_praktik']) ?>')">
                     <div class="card mb-4 py-3 border-bottom-primary">
                         <div class="card-body" style="text-align: center">
-                        <?php echo $value['text'] ?> <br/> <b><?php echo $value['poli_name'] ?></b>
+                            <b><?php echo $value['doctor_detail'] ?></b><br/><?php echo $value['jam_praktik'] ?>
                         </div>
                     </div>
                 </div>
