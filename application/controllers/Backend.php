@@ -162,6 +162,7 @@ class backend extends API_Controller {
     public function dokter_poli()
 	{
         $this->load->helper('api_helper');
+        $this->load->helper('cookie');
         $_GET['id_poli'] = my_simple_crypt($_GET['id_poli'], 'd');
 		header("Access-Control-Allow-Origin: *");
 
@@ -197,12 +198,34 @@ class backend extends API_Controller {
         "
         );
 
-        $data = [];
-		foreach($query->result_array() as $key => $val){
-            $data[$key]['id'] = my_simple_crypt($val['id'],'e');
-            $data[$key]['text'] = $val['text'];
-            $data[$key]['attribute'] = $val['poli_name'];
+        $context = stream_context_create([
+            "http" => [
+                "method" => "GET",
+                "header" => "Accept-languange: en\r\n" .
+                "Cookie: cookielogin=".get_cookie("cookielogin")
+            ]
+        ]);
+
+        $cuti_json = file_get_contents(base_url('backend/hari_tanggal_dokter'), false, $context);
+        $cuti_data = json_decode($cuti_json, true);
+        $cuti_data = $cuti_data['results'];
+
+        foreach($cuti_data as $keyc => $valc){
+            $jadwal_exist[] = my_simple_crypt($valc['doctor_id'], 'd');
         }
+
+        $data = [];
+        $number = 0;
+		foreach($query->result_array() as $key => $val){
+            if(in_array($val['id'], $jadwal_exist)){
+                $data[$number]['id'] = my_simple_crypt($val['id'],'e');
+                $data[$number]['text'] = $val['text'];
+                $data[$number]['attribute'] = $val['poli_name'];
+                $number++;
+            }
+        }
+
+        ksort($data);
 
 		// return data
 		$this->api_return(
@@ -316,6 +339,195 @@ class backend extends API_Controller {
 			],
 		200);
     }
+
+    public function hari_tanggal_dokter()
+	{
+        $this->load->helper('api_helper');
+        $this->load->helper('cookie');
+        $cookie = get_cookie("cookielogin");
+        if(isset($_GET['id_dokter'])){
+            $_GET['id_dokter'] = my_simple_crypt($_GET['id_dokter'], 'd');
+            $where_q1 = " JSON_EXTRACT(child_value, \"$.k4\") = '".$_GET['id_dokter']."' and ";
+            $where_q2 = " JSON_EXTRACT(child_value, \"$.k3\") = '".$_GET['id_dokter']."' and ";
+        }else{
+            $where_q1 = "";
+            $where_q2 = "";
+        }
+        if($cookie==null){
+            $hari_antrian = config_item('day_antrian_online');
+        }else{
+            $cookie = JSON_DECODE($cookie, true);
+            $hari_antrian = config_item('day_antrian_offline');
+        }
+		header("Access-Control-Allow-Origin: *");
+
+		// API Configuration
+		$this->_apiConfig([
+			'methods' => ['GET'],
+        ]);
+
+        if(isset($_GET['q'])){
+            $query = " and JSON_SEARCH(child_value, 'one', '%".$_GET['q']."%') IS NOT NULL";
+        }else{
+            $query = "and 1=1";
+        };
+        
+        $query = $this->db->query(
+        "SELECT
+            child_id as id,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(child_value, \"$.k2\")
+            ) as text,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(child_value, \"$.k4\")
+            ) as doctor_id
+        FROM
+            tm_data 
+        WHERE
+            JSON_EXTRACT(child_value, \"$.k0\") = 'jadwal_dokter' and
+            ".$where_q1."
+            deleted_by = '0' ".$query."
+        "
+        );
+
+        $result = $query->result_array();
+
+        $query_2 = $this->db->query(
+            "SELECT
+            child_id as id,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(child_value, \"$.k2\")
+            ) as text,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(child_value, \"$.k3\")
+            ) as doctor_id
+        FROM
+            tm_data 
+        WHERE
+            JSON_EXTRACT(child_value, \"$.k0\") = 'libur_dokter' and
+            ".$where_q2."
+            JSON_EXTRACT(child_value, \"$.k1\") > '".date('Y-m-d')."' and
+            deleted_by = '0' "
+        );
+        
+        $result_2 = $query_2->result_array();
+
+        $now  = getdate();
+        $mday = $now['mday'];
+        $mon  = $now['mon'];
+        $year = $now['year'];
+        $wday = $now['wday'];
+        $days = date('t');
+
+        $convert = [
+            'Senin'     => 1,
+            'Selasa'    => 2,
+            'Rabu'      => 3,
+            'Kamis'     => 4,
+            'Jumat'     => 5,
+            'Sabtu'     => 6,
+            'Minggu'    => 7
+        ];
+        
+
+        foreach($result as $key => $value){
+            $result[$key]['wday'] = $convert[$value['text']];
+            $hari_jadwal[$convert[$value['text']]] = $value['id'];
+        }
+        
+        $hari = [
+                'Minggu',
+                'Senin',
+                'Selasa',
+                'Rabu',
+                'Kamis',
+                'Jumat',
+                'Sabtu'
+                ];
+        $bulan = [
+                '',
+                'Januari',
+                'Februari',
+                'Maret',
+                'April',
+                'Mei',
+                'Juni',
+                'Juli',
+                'Agustus',
+                'September',
+                'Oktober',
+                'Nopember',
+                'Desember'
+                ];
+        
+        $tanggal = [];
+
+        $liburan = [];
+        foreach($result_2 as $key => $value){
+            $liburan[$value['doctor_id']][] = $value['text'];
+        }
+
+        $n = 0;
+        while($n<$hari_antrian){$n++;
+            if($mday>$days){
+                $mday = 1;
+                if($mon>=12){
+                    $mon = 1;
+                    $year++;
+                }else $mon++;
+                $days = date('t',mktime(0,0,0,$mon,$mday,$year));
+            }
+            if($wday>=7)$wday = 0;
+            $val = $year.'-';
+            if($mon<10)$val.='0';
+            $val.= $mon.'-';
+            if($mday<10)$val.='0';
+            $val.= $mday;
+            foreach($result as $rkey => $rvalue){
+                error_reporting(0);
+                if($cookie==null){
+                    if(array_key_exists($wday, $hari_jadwal) && !in_array($val, $liburan[$rvalue['doctor_id']]) && !in_array($val, [date('Y-m-d')])){
+                        $tanggal[] =[
+                            'id' => my_simple_crypt($val,'e'),
+                            'text'  => $hari[$wday].', '.$mday.' '.$bulan[$mon].' '.$year,
+                            'child_id' => my_simple_crypt($hari_jadwal[$wday],'e'),
+                            'doctor_id' => my_simple_crypt($rvalue['doctor_id'],'e')
+                        ];
+                    };
+                }else{
+                    if($cookie['role_user_access']==my_simple_crypt('0','e')){
+                        if(array_key_exists($wday, $hari_jadwal) && !in_array($val, $liburan[$rvalue['doctor_id']])){
+                            $tanggal[] =[
+                                'id' => my_simple_crypt($val,'e'),
+                                'text'  => $hari[$wday].', '.$mday.' '.$bulan[$mon].' '.$year,
+                                'child_id' => my_simple_crypt($hari_jadwal[$wday],'e'),
+                                'doctor_id' => my_simple_crypt($rvalue['doctor_id'],'e')
+                            ];
+                        };
+                    }else{
+                        if(array_key_exists($wday, $hari_jadwal) && !in_array($val, $liburan[$rvalue['doctor_id']]) && !in_array($val, [date('Y-m-d')])){
+                            $tanggal[] =[
+                                'id' => my_simple_crypt($val,'e'),
+                                'text'  => $hari[$wday].', '.$mday.' '.$bulan[$mon].' '.$year,
+                                'child_id' => my_simple_crypt($hari_jadwal[$wday],'e'),
+                                'doctor_id' => my_simple_crypt($rvalue['doctor_id'],'e')
+                            ];
+                        };
+                    }
+                }
+            }
+            $wday++;
+            $mday++;
+        };
+
+		// return data
+		$this->api_return(
+			[
+				'status' => true,
+				"results" => $tanggal,
+			],
+		200);
+    }
     
     public function hari_tanggal()
 	{
@@ -370,6 +582,7 @@ class backend extends API_Controller {
         WHERE
             JSON_EXTRACT(child_value, \"$.k0\") = 'libur_dokter' and
             JSON_EXTRACT(child_value, \"$.k3\") = '".$_GET['id_dokter']."' and
+            JSON_EXTRACT(child_value, \"$.k1\") > '".date('Y-m-d')."' and
             deleted_by = '0' "
         );
         
@@ -1952,9 +2165,9 @@ class backend extends API_Controller {
             $pencarian = "
                 and 
                     (
+                        JSON_SEARCH(UPPER(tm_antrian.antrian_data), 'all', UPPER('%".$search."%')) IS NOT NULL or
                         JSON_SEARCH(UPPER(penjamin_tb.child_value), 'all', UPPER('%".$search."%')) IS NOT NULL or
-                        JSON_SEARCH(UPPER(poliklinik_tb.child_value), 'all', UPPER('%".$search."%')) IS NOT NULL or
-                        JSON_SEARCH(UPPER(tm_antrian.antrian_data), 'all', UPPER('%".$search."%')) IS NOT NULL
+                        JSON_SEARCH(UPPER(poliklinik_tb.child_value), 'all', UPPER('%".$search."%')) IS NOT NULL
                     )
             ";
         }
@@ -1989,6 +2202,11 @@ class backend extends API_Controller {
             JSON_UNQUOTE(
                 JSON_EXTRACT(
                     tm_antrian.antrian_data,
+                 \"$.jam_praktik\")
+            ) as jam_praktik,
+            JSON_UNQUOTE(
+                JSON_EXTRACT(
+                    tm_antrian.antrian_data,
                  \"$.nomor_rm\")
             ) as nomor_rm,
             JSON_UNQUOTE(
@@ -2014,7 +2232,16 @@ class backend extends API_Controller {
                     \"$.nomor_urut\")
                 ) = 1 THEN \"Online\"
                 ELSE \"Offline\"
-            END AS is_online 
+            END AS is_online,
+            CASE
+                WHEN 
+                JSON_UNQUOTE(
+                    JSON_EXTRACT(
+                        tm_antrian.antrian_data,
+                    \"$.type_patient\")
+                ) = 'baru' THEN \"Baru\"
+                ELSE \"Lama\"
+            END AS type_patient 
             FROM
                 tm_antrian
             INNER JOIN tm_data as penjamin_tb on JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data, \"$.penjamin\")) = penjamin_tb.child_id

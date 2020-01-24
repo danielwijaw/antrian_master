@@ -29,15 +29,16 @@
         foreach($obj as $key => $value){
             $nomor = $no++;
             $spreadsheet->setActiveSheetIndex(0)
-            ->setCellValue('A'.$nomor, $value['penjamin_text'])
-            ->setCellValue('B'.$nomor, $value['poliklinik_text'])
-            ->setCellValue('C'.$nomor, $value['dokter_text'])
-            ->setCellValue('D'.$nomor, $value['hari'].','.$value['tanggal'])
-            ->setCellValue('E'.$nomor, $value['nomor_rm'])
-            ->setCellValue('F'.$nomor, $value['nama_pasien'])
-            ->setCellValue('G'.$nomor, $value['alamat'])
-            ->setCellValue('H'.$nomor, $value['nomor_urut'])
-            ->setCellValue('I'.$nomor, $value['is_online']);
+            ->setCellValue('A'.$nomor, $value['type_patient'])
+            ->setCellValue('B'.$nomor, $value['penjamin_text'])
+            ->setCellValue('C'.$nomor, $value['poliklinik_text'])
+            ->setCellValue('D'.$nomor, $value['dokter_text'])
+            ->setCellValue('E'.$nomor, $value['hari'].','.$value['tanggal'])
+            ->setCellValue('F'.$nomor, $value['nomor_rm'])
+            ->setCellValue('G'.$nomor, $value['nama_pasien'])
+            ->setCellValue('H'.$nomor, $value['alamat'])
+            ->setCellValue('I'.$nomor, $value['nomor_urut'])
+            ->setCellValue('J'.$nomor, $value['is_online']);
         };
 
         // Rename worksheet
@@ -61,6 +62,7 @@
         <div class="table-responsive">
             <table class="table table-bordered">
                 <tr>
+                    <td>Jenis Pasien</td>
                     <td>Penjamin</td>
                     <td>Poliklinik</td>
                     <td>Dokter</td>
@@ -73,10 +75,11 @@
                 </tr>
                 <?php foreach($obj as $key => $value){  ?>
                 <tr>
+                    <td><?php echo $value['type_patient'] ?></td>
                     <td><?php echo $value['penjamin_text'] ?></td>
                     <td><?php echo $value['poliklinik_text'] ?></td>
                     <td><?php echo $value['dokter_text'] ?></td>
-                    <td><?php echo $value['hari'].','.$value['tanggal'] ?></td>
+                    <td><?php echo $value['hari'].','.$value['tanggal'].' ('.$value['jam_praktik'].' )'; ?></td>
                     <td><?php echo $value['nomor_rm'] ?></td>
                     <td><?php echo $value['nama_pasien'] ?></td>
                     <td><?php echo $value['alamat'] ?></td>

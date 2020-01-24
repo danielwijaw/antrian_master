@@ -81,13 +81,13 @@
                 <a class="small" href="<?php echo base_url() ?>pasien">Sudah Memiliki Nomor Antrian?</a>
               </div>
               <div class="text-center">
+                <a class="small" onclick="ajax('<?php echo base_url() ?>frontend/dokumentasi','#dokumentasishow')" href="javascript:void(0)" data-toggle="modal" data-target="#modaldokumentasi">Aturan Pendaftaran Online</a>
+              </div>
+              <div class="text-center">
                 <a class="small" href="<?php echo base_url() ?>frontend/dokter_cuti">Jadwal Libur Dokter</a>
               </div>
               <div class="text-center">
                 <a class="small" href="<?php echo base_url() ?>frontend/jadwal_dokter">Jadwal Dokter</a>
-              </div>
-              <div class="text-center">
-                <a class="small" onclick="ajax('<?php echo base_url() ?>frontend/dokumentasi','#dokumentasishow')" href="javascript:void(0)" data-toggle="modal" data-target="#modaldokumentasi">Dokumentasi</a>
               </div>
               <div class="text-center">
                 <a class="small" href="<?php echo base_url() ?>login">Login</a>
