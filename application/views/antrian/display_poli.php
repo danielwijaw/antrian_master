@@ -30,8 +30,6 @@
                     <div class="card mb-4 py-3 border-bottom-primary">
                         <div class="card-body" style="text-align: center">
                             <img width="100%" src="<?php echo base_url('public/img/doctor.png') ?>" id="foto-dokter"/>
-                            <br/>
-                            <p class="text-gray-900" style="font-size: 22pt; font-weight: bold;"><?php echo $obj['data']['doctor_name'] = str_replace(" ", "<br/>",$obj['data']['doctor_name']) ?></p>
                         </div>
                     </div>
                 </div>
