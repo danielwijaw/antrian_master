@@ -28,7 +28,7 @@
                 <?php } ?>
                 </div>
               <hr>
-              <div class="text-center">
+              <div class="text-center" style="display:none">
                 <a class="small" href="<?php echo base_url() ?>">Kembali Ke Pendaftaran</a>
               </div>
             </div>

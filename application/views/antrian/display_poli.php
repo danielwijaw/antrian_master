@@ -49,7 +49,7 @@
             </div>
             <hr>
             <div class="text-center">
-                <a class="small" href="<?php echo base_url("display") ?>">Kembali Ke Antrian</a>
+                <a class="small" href="<?php echo base_url("display") ?>">Kembali Ke Display</a>
             </div>
         </div>
         </div>
