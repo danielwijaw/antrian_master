@@ -9,26 +9,32 @@
             <div class="row">
                 <?php 
                     error_reporting(0);
-                    $json = file_get_contents(base_url('backend/get_list_today'));
+                    $json = file_get_contents(base_url('backend/dokter_poli_all'));
                     $obj = json_decode($json, true);
-                    $json_data = file_get_contents(base_url('backend/record_hari_ini'));
-                    $obj_data = json_decode($json_data, true);
-                    foreach($obj_data['results'] as $key_data => $value_data){
-                        $data[$value_data['dokter']][$value_data['jam_praktik']] = $value_data;
+                    $json_list = file_get_contents(base_url('backend/get_list_today'));
+                    $obj_list = json_decode($json_list, true);
+                    foreach($obj_list['results'] as $keyx => $valuex){
+                        $dokter[$valuex['id']][$valuex['jam_praktik']]['count'] = $valuex['count'];
+                        $dokter[$valuex['id']][$valuex['jam_praktik']]['jam_praktik'] = $valuex['jam_praktik'];
                     }
                     foreach($obj['results'] as $key => $value){
                 ?>
-                <div onclick="openInNewTab('<?php echo base_url('call_antrian/'.$value['id'].'/'.$value['jam_praktik']) ?>')"  style="margin: 1vh; width: 50vh; cursor: pointer" >
+                <div onclick="openInNewTab('<?php echo base_url('call_antrian/'.$value['id']) ?>')"  style="margin: 1vh; width: 50vh; cursor: pointer" >
                     <div class="card border-left-primary shadow h-100 py-2">
                         <div class="card-body">
                             <div class="row no-gutters align-items-center">
                                 <div>
                                     <div class="text-xs font-weight-bold text-primary text-uppercase">
-                                        <b><?php echo $value['doctor_detail'] ?></b><br/><?php echo $value['jam_praktik'] ?>
+                                        <b><?php echo $value['text'] ?></b> <?php echo $value['poli_name'] ?>
                                     </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                        Antrian : <?php echo $data[$value['id']][$value['jam_praktik']]['total']; ?>
+                                    <div class="h6 mb-0 text-gray-800">
+                                        Jam Praktik & Jumlah Antrian Hari Ini
                                     </div>
+                                    <?php foreach($dokter[$value['id']] as $keyxz => $valxz){ ?>
+                                    <div class="h6 mb-0 font-weight-bold text-gray-800">
+                                        <?php echo $valxz['jam_praktik'] ?> || <?php echo $valxz['count'] ?> 
+                                    </div>
+                                    <?php } ?>
                                 </div>
                             </div>
                         </div>

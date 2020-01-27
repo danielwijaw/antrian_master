@@ -392,20 +392,20 @@ class backend extends API_Controller {
         
         $query = $this->db->query(
         "SELECT
-            child_id as id,
+            tm_data.child_id as id,
             JSON_UNQUOTE(
-                JSON_EXTRACT(child_value, \"$.k2\")
+                JSON_EXTRACT(tm_data.child_value, \"$.k2\")
             ) as text,
             JSON_UNQUOTE(
-                JSON_EXTRACT(child_value, \"$.k3\")
+                JSON_EXTRACT(tm_data.child_value, \"$.k3\")
             ) as poli_id,
             JSON_UNQUOTE(
-                JSON_EXTRACT(child_value, \"$.k4\")
+                JSON_EXTRACT(tm_data.child_value, \"$.k4\")
             ) as poli_name
         FROM
             tm_data 
         WHERE
-            JSON_EXTRACT(child_value, \"$.k0\") = 'dokter' and
+            JSON_EXTRACT(tm_data.child_value, \"$.k0\") = 'dokter' and
             deleted_by = '0'
         "
         );
@@ -2048,8 +2048,7 @@ class backend extends API_Controller {
 		200);
     }
 
-    public function called_antrian($id, $jadwal){
-        $jadwal = urldecode($jadwal);
+    public function called_antrian($id){
         $this->load->helper('api_helper');
         header("Access-Control-Allow-Origin: *");
 
@@ -2094,8 +2093,11 @@ class backend extends API_Controller {
                 deleted_by = 0 and
                 JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data,\"$.dokter\")) = '".$id."' and
                 JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data,\"$.hari_tanggal\")) = '".date('Y-m-d')."' and
-                JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data,\"$.jam_praktik\")) = '".$jadwal."' and
-                JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data,\"$.called_antrian\")) = '1'
+                JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data,\"$.called_antrian\")) = '1' and
+                    CAST('".date('H:i:s')."' AS time) 
+                        BETWEEN 
+                            STR_TO_DATE(SUBSTRING_INDEX(JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\")), ' - ', 1), '%H:%i') and
+                            STR_TO_DATE(SUBSTRING_INDEX(JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\")), ' - ', -1), '%H:%i')
             "
         );
 
@@ -2193,9 +2195,8 @@ class backend extends API_Controller {
 		200);
     }
 
-    public function update_call_antrian($id, $poli, $jam_praktik){
+    public function update_call_antrian($id, $poli){
         $this->load->helper('api_helper');
-        $jam_praktik = urldecode($jam_praktik);
         $poli = my_simple_crypt($poli, 'd');
         header("Access-Control-Allow-Origin: *");
 
@@ -2209,8 +2210,12 @@ class backend extends API_Controller {
                 "UPDATE tm_antrian 
                 SET antrian_data = JSON_SET( antrian_data, \"$.called_antrian\", \"0\" )
                 WHERE
-                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\") = '".$jam_praktik."' and
-                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.dokter\") = '".$poli."'
+                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.dokter\") = '".$poli."' and
+                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.hari_tanggal\") = '".date('Y-m-d')."' and
+                    CAST('".date('H:i:s')."' AS time) 
+                        BETWEEN 
+                            STR_TO_DATE(SUBSTRING_INDEX(JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\")), ' - ', 1), '%H:%i') and
+                            STR_TO_DATE(SUBSTRING_INDEX(JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\")), ' - ', -1), '%H:%i')
                 "
             );
         }
@@ -2226,11 +2231,20 @@ class backend extends API_Controller {
                         JSON_EXTRACT(
                             tm_antrian.antrian_data,
                         \"$.called_antrian\")
-                    ) as called_antrian
+                    ) as called_antrian, 
+                    JSON_UNQUOTE(
+                        JSON_EXTRACT(
+                            tm_antrian.antrian_data,
+                        \"$.jam_praktik\")
+                    ) as jam_praktik
                     FROM tm_antrian
                     WHERE
-                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\") = '".$jam_praktik."' and
-                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.dokter\") = '".$poli."'
+                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.dokter\") = '".$poli."' and
+                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.hari_tanggal\") = '".date('Y-m-d')."' and
+                    CAST('".date('H:i:s')."' AS time) 
+                        BETWEEN 
+                            STR_TO_DATE(SUBSTRING_INDEX(JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\")), ' - ', 1), '%H:%i') and
+                            STR_TO_DATE(SUBSTRING_INDEX(JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\")), ' - ', -1), '%H:%i')
                     ORDER BY CAST(nomor_urut AS UNSIGNED) ASC
                 "
             );
@@ -2261,8 +2275,8 @@ class backend extends API_Controller {
                     "UPDATE tm_antrian 
                     SET antrian_data = JSON_SET( antrian_data, \"$.called_antrian\", \"0\" )
                     WHERE
-                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\") = '".$jam_praktik."' and
-                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.dokter\") = '".$poli."'
+                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.dokter\") = '".$poli."' and
+                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.hari_tanggal\") = '".date('Y-m-d')."' 
                     "
                 );
             }
@@ -2271,9 +2285,9 @@ class backend extends API_Controller {
                     "UPDATE tm_antrian 
                     SET antrian_data = JSON_SET( antrian_data, \"$.called_antrian\", \"1\" )
                     WHERE
-                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\") = '".$jam_praktik."' and
                         JSON_EXTRACT(tm_antrian.antrian_data, \"$.dokter\") = '".$poli."' and
-                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.nomor_urut\") = '".$call_id."'
+                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.nomor_urut\") = '".$call_id."' and
+                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.hari_tanggal\") = '".date('Y-m-d')."'
                     "
                 );
             }
@@ -2289,11 +2303,20 @@ class backend extends API_Controller {
                         JSON_EXTRACT(
                             tm_antrian.antrian_data,
                         \"$.called_antrian\")
-                    ) as called_antrian
+                    ) as called_antrian, 
+                    JSON_UNQUOTE(
+                        JSON_EXTRACT(
+                            tm_antrian.antrian_data,
+                        \"$.jam_praktik\")
+                    ) as jam_praktik
                     FROM tm_antrian
                     WHERE
-                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\") = '".$jam_praktik."' and
-                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.dokter\") = '".$poli."'
+                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.dokter\") = '".$poli."' and
+                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.hari_tanggal\") = '".date('Y-m-d')."' and
+                    CAST('".date('H:i:s')."' AS time) 
+                        BETWEEN 
+                            STR_TO_DATE(SUBSTRING_INDEX(JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\")), ' - ', 1), '%H:%i') and
+                            STR_TO_DATE(SUBSTRING_INDEX(JSON_UNQUOTE(JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\")), ' - ', -1), '%H:%i')
                     ORDER BY CAST(nomor_urut AS UNSIGNED) ASC
                 "
             );
@@ -2324,8 +2347,8 @@ class backend extends API_Controller {
                     "UPDATE tm_antrian 
                     SET antrian_data = JSON_SET( antrian_data, \"$.called_antrian\", \"0\" )
                     WHERE
-                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\") = '".$jam_praktik."' and
-                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.dokter\") = '".$poli."'
+                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.dokter\") = '".$poli."' and
+                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.hari_tanggal\") = '".date('Y-m-d')."'
                     "
                 );
             }
@@ -2334,9 +2357,9 @@ class backend extends API_Controller {
                     "UPDATE tm_antrian 
                     SET antrian_data = JSON_SET( antrian_data, \"$.called_antrian\", \"1\" )
                     WHERE
-                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\") = '".$jam_praktik."' and
                         JSON_EXTRACT(tm_antrian.antrian_data, \"$.dokter\") = '".$poli."' and
-                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.nomor_urut\") = '".$call_id."'
+                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.nomor_urut\") = '".$call_id."' and
+                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.hari_tanggal\") = '".date('Y-m-d')."'
                     "
                 );
             }
@@ -2347,8 +2370,8 @@ class backend extends API_Controller {
                 "UPDATE tm_antrian 
                 SET antrian_data = JSON_SET( antrian_data, \"$.called_antrian\", \"0\" )
                 WHERE
-                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\") = '".$jam_praktik."' and
-                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.dokter\") = '".$poli."'
+                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.dokter\") = '".$poli."' and
+                    JSON_EXTRACT(tm_antrian.antrian_data, \"$.hari_tanggal\") = '".date('Y-m-d')."'
                 "
             );
             if($query){
@@ -2356,9 +2379,9 @@ class backend extends API_Controller {
                     "UPDATE tm_antrian 
                     SET antrian_data = JSON_SET( antrian_data, \"$.called_antrian\", \"1\" )
                     WHERE
-                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.jam_praktik\") = '".$jam_praktik."' and
                         JSON_EXTRACT(tm_antrian.antrian_data, \"$.dokter\") = '".$poli."' and
-                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.nomor_urut\") = '".$id."'
+                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.nomor_urut\") = '".$id."' and
+                        JSON_EXTRACT(tm_antrian.antrian_data, \"$.hari_tanggal\") = '".date('Y-m-d')."'
                     "
                 );
             }
@@ -2377,7 +2400,7 @@ class backend extends API_Controller {
                 '932255',
                 $options
             );
-            $data = [my_simple_crypt($poli, 'e'), $jam_praktik];
+            $data = my_simple_crypt($poli, 'e');
             $pusher->trigger('my-channel', 'my-event', $data);
         }else{
             $status = false;

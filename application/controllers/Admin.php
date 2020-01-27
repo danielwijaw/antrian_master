@@ -72,10 +72,10 @@ class Admin extends API_Controller {
 		$this->load->view('admin/index', $data);
     }
 
-    public function call_antrian($id, $jam)
+    public function call_antrian($id)
 	{
         $data = [
-            'root_data' => '/admin/antrian/'.$id.'/'.$jam
+            'root_data' => '/admin/antrian/'.$id
         ];
 		$this->load->view('antrian/index', $data);
     }
@@ -109,7 +109,7 @@ class Admin extends API_Controller {
         $this->load->view('admin/edit');
     }
 
-    public function antrian($url, $jam){
+    public function antrian($url){
         $this->load->view('admin/call_poli');
     }
 

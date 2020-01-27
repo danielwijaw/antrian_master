@@ -15,7 +15,6 @@
     $pecah = explode("/", $data);
     $json = file_get_contents(base_url('backend/get_doctor/'.$pecah[5]));
     $obj = json_decode($json, true);
-    $pecah[6] = urldecode($pecah[6]);
 ?>
 <div class="card o-hidden border-0 shadow-lg my-5">
     <div class="card-body p-0">
@@ -24,7 +23,7 @@
         <div class="col-lg-12">
         <div class="p-5">
             <div class="text-center">
-                <h1 class="text-gray-900 mb-4" style="font-weight: bold">Antrian <?php echo $obj['data']['poli_name']."<br/>".urldecode($pecah[6]) ?></h1>
+                <h1 class="text-gray-900 mb-4" style="font-weight: bold">Antrian <?php echo $obj['data']['poli_name']."<br/>" ?><?php echo $obj['data']['doctor_name'] ?></h1>
             </div>
             <div class="row">
                 <div class="col-lg-3">
@@ -64,7 +63,7 @@
         $("#nomor_antrian").html("&infin;");
         $("#text_antrian").html("Loading Catching Data");
         $.ajax({
-            url: "<?php echo base_url('backend/called_antrian/'.$pecah[5].'/'.$pecah[6]) ?>",
+            url: "<?php echo base_url('backend/called_antrian/'.$pecah[5]) ?>",
             contentType: false,
             cache: true,
             processData: false,
@@ -80,7 +79,7 @@
                 }
             },
             error: function(XMLHttpRequest, textStatus, errorThrown) {
-                $(div).html("<p class='ajaxloadingdata'>Error Catching Data</p>");
+                $('#text_antrian').html("<p class='ajaxloadingdata'>Error Catching Data</p>");
                 $("#catching_error").html(XMLHttpRequest.responseText); 
                 if (XMLHttpRequest.status == 0) {
                 alert(' Check Your Network.');
@@ -107,7 +106,7 @@
 
     var channel = pusher.subscribe('my-channel');
     channel.bind('my-event', function(data) {
-        if(data[0]=='<?php echo $pecah[5]; ?>' && data[1]=='<?php echo $pecah[6]; ?>'){
+        if(data=='<?php echo $pecah[5]; ?>'){
             call_poli();
         };
     });
