@@ -74,6 +74,7 @@ class Frontend extends API_Controller {
     
     // Ajax
     public function antrian(){
+        $this->load->helper('cookie');
         $this->load->view('antrian/antrian');
     }
     

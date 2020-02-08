@@ -28,7 +28,7 @@
                                         <b><?php echo $value['text'] ?></b> <?php echo $value['poli_name'] ?>
                                     </div>
                                     <div class="h6 mb-0 text-gray-800">
-                                        Jam Praktik & Jumlah Antrian Hari Ini
+                                        Jam Praktik & Batas Jumlah Antrian
                                     </div>
                                     <?php foreach($dokter[$value['id']] as $keyxz => $valxz){ ?>
                                     <div class="h6 mb-0 font-weight-bold text-gray-800">

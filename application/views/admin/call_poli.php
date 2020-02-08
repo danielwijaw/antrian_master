@@ -42,7 +42,7 @@
                         </p>
                         <p>
                             <div class="col-md-12" align="center">
-                                <input id="custom_number" type="number" onkeyup="this.value=this.value.replace(/[^\d]/,'')" class="form-control"> <br/>
+                                <input id="custom_number" type="number" onkeyup="this.value=this.value.replace(/[^\d]/,'')" class="form-control" value="0"> <br/>
                                 <button onclick="antrian_call('custom', '<?php echo $obj['data']['id'] ?>')" class="btn btn-primary">Custom Antrian</button>
                             </div>
                         </p>

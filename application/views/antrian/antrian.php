@@ -10,6 +10,14 @@
                 <h1 class="h4 text-gray-900 mb-4">Antrian Poli Klinik</h1>
               </div>
               <?php 
+                $cookie_flash = get_cookie("cookieflashdata"); 
+                if($cookie_flash!=null){
+              ?>
+                <div class="text-center">
+                  <h3 style="color: red"><?php echo $cookie_flash ?></h3>
+                </div>
+              <?php } ?>
+              <?php 
                 if(config_item('status_antrian')=='0'){
                   echo "Aplikasi Antrian Sedang Non Aktif";
                   die();
@@ -75,6 +83,7 @@
                 <input type="hidden" name="dokter_history" id="dokter_history">
                 <input type="hidden" name="hari_tanggal_history" id="hari_tanggal_history">
                 <input type="hidden" name="jam_history" id="jam_history">
+                <input type="hidden" name="max_antrian" id="max_antrian">
               </form>
               <hr>
               <div class="text-center" style="display:none">
@@ -169,6 +178,7 @@
   });
   $('.jam_select2').on('select2:select', function (e) {
     $("#jam_history").val(Object.entries(e.params.data));
+    $("#max_antrian").val(e.params.data.jumlah);
     $(".nomor_urut_select2").val('').trigger('change');
     $('.nomor_urut_select2').select2({
       ajax: {
