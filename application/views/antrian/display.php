@@ -21,6 +21,13 @@
                     </div>
                 </div>
                 <?php } ?>
+                <div class="col-lg-3" style="cursor: pointer" onclick="openInNewTab('<?php echo base_url('display/all') ?>')">
+                    <div class="card mb-4 py-3 border-bottom-primary">
+                        <div class="card-body" style="text-align: center">
+                            <b>All Dokter</b><br/>All Poli
+                        </div>
+                    </div>
+                </div>
             </div>
             <hr>
             <div class="text-center" style="display:none">

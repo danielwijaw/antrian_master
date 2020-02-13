@@ -2523,6 +2523,7 @@ class backend extends API_Controller {
 
         $query = $this->db->query(
             "SELECT
+            tm_antrian.antrian_id,
             JSON_UNQUOTE(
                 JSON_EXTRACT(
                     penjamin_tb.child_value,
@@ -2578,7 +2579,7 @@ class backend extends API_Controller {
                 JSON_UNQUOTE(
                     JSON_EXTRACT(
                         tm_antrian.antrian_data,
-                    \"$.nomor_urut\")
+                    \"$.is_online\")
                 ) = 1 THEN \"Online\"
                 ELSE \"Offline\"
             END AS is_online,
@@ -2614,6 +2615,42 @@ class backend extends API_Controller {
         }
 
         $this->api_return(
+			[
+				'status' => $status,
+				"results" => $json,
+			],
+		200);
+    }
+
+    function delete_antrian_by_admin($id)
+    {
+        $this->load->helper('api_helper');
+        $this->load->helper('cookie');
+		header("Access-Control-Allow-Origin: *");
+
+		// API Configuration
+		$this->_apiConfig([
+			'methods' => ['GET'],
+        ]);
+        
+        $cookie = get_cookie("cookielogin");
+        $cookie = JSON_DECODE($cookie, true);
+
+        $this->db->set('deleted_by', my_simple_crypt($cookie['id'], 'd'));
+        $this->db->set('deleted_at', date('Y-m-d H:i:s'));
+        $this->db->where('antrian_id', $id);
+        $result = $this->db->update('tm_antrian');
+
+        if($result){
+            $status = "Delete Data Success";
+            $json = $result;
+        }else{
+            $status = false;
+            $json = "Failed Delete Data";
+        }
+
+        // return data
+		$this->api_return(
 			[
 				'status' => $status,
 				"results" => $json,

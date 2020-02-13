@@ -91,7 +91,11 @@ class Frontend extends API_Controller {
     }
     
     public function display_poli_by_id($id){
-        $this->load->view('antrian/display_poli');
+        if($id!='all'){
+            $this->load->view('antrian/display_poli');
+        }else{
+            $this->load->view('antrian/display_poli_all');
+        }
     }
     
     public function antrian_data_view(){

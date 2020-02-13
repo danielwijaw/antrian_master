@@ -62,6 +62,7 @@
         <div class="table-responsive">
             <table class="table table-bordered">
                 <tr>
+                    <td>&nbsp;</td>
                     <td>Jenis Pasien</td>
                     <td>Penjamin</td>
                     <td>Poliklinik</td>
@@ -75,6 +76,7 @@
                 </tr>
                 <?php foreach($obj as $key => $value){  ?>
                 <tr>
+                    <td width="1%"><input name="edit" onclick="edit_report('idnya<?php echo $value['antrian_id'] ?>')" id="idnya<?php echo $value['antrian_id'] ?>" type="radio" value="<?php echo $value['antrian_id'] ?>"></td>
                     <td><?php echo $value['type_patient'] ?></td>
                     <td><?php echo $value['penjamin_text'] ?></td>
                     <td><?php echo $value['poliklinik_text'] ?></td>
